@@ -12,23 +12,23 @@ for line in f:
         if num_attributes == 1:
             exit(1)
         item = items[i].replace("'", "''")
-        insert_line = insert_line + "'" + item + "'"  # on ne met pas la virgule ici car ç?a l'appliquerait à? tous les attributs, pas seulement à? gé?o
+        insert_line = insert_line + "'" + item + "'"  # on ne met pas la virgule ici car ???a l'appliquerait ??? tous les attributs, pas seulement ??? g???o
         if i == num_attributes-1 :
             lst = items[i].split(",")
             insert_line = insert_line + ", '{"
-            print("mon lst est",lst)
-            print("la taille de mon tableau est",len(lst))
+            #print("mon lst est",lst)
+            #print("la taille de mon tableau est",len(lst))
             for j in range (0,len(lst)):
-                print("Mon j est",j)
+                #print("Mon j est",j)
                 coco = lst[j].split(":")
-                print("mon lst est",lst)
-                print("mon coco est",coco[j])
-                insert_line = insert_line + coco[0] + ","  # la virgule sert à? sé?parer les diffé?rents attributs
+                #print("mon lst est",lst)
+                #print("mon coco est",coco[j])
+                insert_line = insert_line + coco[0] + ","  # la virgule sert ??? s???parer les diff???rents attributs
                 if(j==len(lst)-1):
-                    insert_line = insert_line + coco[1]   # la virgule sert à? sé?parer les diffé?rents attributs
+                    insert_line = insert_line + coco[1]   # la virgule sert ??? s???parer les diff???rents attributs
                     insert_line = insert_line + "}'"
                 else:
-                    insert_line = insert_line + coco[1] + ','   # la virgule sert à? sé?parer les diffé?rents attributs
+                    insert_line = insert_line + coco[1] + ','   # la virgule sert ??? s???parer les diff???rents attributs
 
         if i != num_attributes - 1:
             insert_line = insert_line + ", "
