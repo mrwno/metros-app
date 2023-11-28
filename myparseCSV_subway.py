@@ -26,10 +26,9 @@ for line in f:
                 insert_line = insert_line + coco[0] + ","  # la virgule sert à? sé?parer les diffé?rents attributs
                 if(j==len(lst)-1):
                     insert_line = insert_line + coco[1]   # la virgule sert à? sé?parer les diffé?rents attributs
+                    insert_line = insert_line + "}'"
                 else:
                     insert_line = insert_line + coco[1] + ','   # la virgule sert à? sé?parer les diffé?rents attributs
-                if(j==len(lst)-1):
-                    insert_line = insert_line + "}'"
 
         if i != num_attributes - 1:
             insert_line = insert_line + ", "
