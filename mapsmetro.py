@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
         self.maptype_box.currentIndexChanged.connect(self.webView.setMap)
         controls_panel.addWidget(self.maptype_box)
 
-        _label = QLabel('Mé?thode: ', self)
+        _label = QLabel('M???thode: ', self)
         _label.setFixedSize(20,20)
         self.meth_box = QComboBox() 
         self.meth_box.addItems( ['Metro', 'Tram', 'Bus', 'Walk', 'Train','Tout'] )
@@ -126,12 +126,15 @@ class MainWindow(QMainWindow):
 
         self.rows = []
         route=[]
-        if _hops >= 1 : 
-            self.cursor.execute(""f" SELECT distinct C.name,E.route_I,D.name FROM subway AS A,subway AS B,nodes AS C, nodes AS D,paris_to AS E WHERE  (C.name=$${_fromstation}$$ AND C.stop_I=A.from_stop_I) AND (D.name=$${_tostation}$$ AND D.stop_I=B.to_stop_I) AND (A.route_I_counts=B.route_I_counts) AND  A.counts[1]=E.route_I""")
+        #if _hops >= 1 : 
+            #self.cursor.execute(""f" SELECT distinct C.name,E.route_I,D.name FROM subway AS A,subway AS B,nodes AS C, nodes AS D,paris_to AS E WHERE  (C.name=$${_fromstation}$$ AND C.stop_I=A.from_stop_I) AND (D.name=$${_tostation}$$ AND D.stop_I=B.to_stop_I) AND (A.route_I_counts=B.route_I_counts) AND  A.counts[1]=E.route_I""")
+            #self.conn.commit()
+            #self.rows += self.cursor.fetchall()
+
+        if _hops >= 2 :
+            self.cursor.execute(""f" SELECT distinct E.name,H.route_name,F.name,I.route_name,G.name FROM subway AS A,subway AS B,subway AS C,nodes AS E, nodes AS F,nodes AS G,paris_to AS H,paris_to AS I WHERE  (A.to_stop_I=E.stop_I) AND (E.name=$${_fromstation}$$) AND A.to_stop_I=B.from_stop_I AND B.to_stop_I=C.from_stop_I  AND (C.to_stop_I=G.stop_I AND G.name=$${_tostation}$$ AND B.to_stop_I=F.stop_I AND H.route_I=A.counts[1] AND I.route_I=C.counts[1])""")
             self.conn.commit()
             self.rows += self.cursor.fetchall()
-
-
 
         if len(self.rows) == 0 : 
             self.tableWidget.setRowCount(0)
