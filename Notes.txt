@@ -1,4 +1,4 @@
-Mise à jour : Le hops=2 est fonctionnel
+Mise à jour : Le hops=2 est semi-fonctionnel (il ne reste plus qu'a inclure le hops=1 dans celui-ci)
 
 - Pour la map : http://www.openstreetmap.org, https://planet.osm.org
 
