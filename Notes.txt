@@ -1,3 +1,5 @@
+Mise à jour : Le hops=2 est fonctionnel
+
 - Pour la map : http://www.openstreetmap.org, https://planet.osm.org
 
 - Pour résumer ce que j'ai fait : d'abord on crée le fichier schema qui sert à crée la table
