@@ -1,4 +1,4 @@
-f = open("network_bus.csv", 'r')
+f = open("network_subway.csv", 'r')
 next(f)
 
 for line in f:
