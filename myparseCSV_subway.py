@@ -1,4 +1,4 @@
-f = open("network_subway.csv", 'r')
+f = open("network_bus.csv", 'r')
 next(f)
 
 for line in f:
@@ -16,19 +16,20 @@ for line in f:
         if i == num_attributes-1 :
             lst = items[i].split(",")
             insert_line = insert_line + ", '{"
-            #print("mon lst est",lst)
-            #print("la taille de mon tableau est",len(lst))
+            insert_line2 = ", '{"
+
             for j in range (0,len(lst)):
-                #print("Mon j est",j)
                 coco = lst[j].split(":")
-                #print("mon lst est",lst)
-                #print("mon coco est",coco[j])
-                insert_line = insert_line + coco[0] + ","  # la virgule sert ??? s???parer les diff???rents attributs
                 if(j==len(lst)-1):
-                    insert_line = insert_line + coco[1]   # la virgule sert ??? s???parer les diff???rents attributs
+                    insert_line = insert_line + coco[0]   # la virgule sert ??? s???parer les diff???rents attributs
                     insert_line = insert_line + "}'"
+                    insert_line2 = insert_line2 + coco[1]
+                    insert_line2 = insert_line2 + "}'"
                 else:
-                    insert_line = insert_line + coco[1] + ','   # la virgule sert ??? s???parer les diff???rents attributs
+                    insert_line = insert_line + coco[0] + ","
+                    insert_line2 = insert_line2 + coco[1] + ','   # la virgule sert ??? s???parer les diff???rents attributs  # la virgule sert ??? s???parer les diff???rents attributs
+
+            insert_line = insert_line + insert_line2
 
         if i != num_attributes - 1:
             insert_line = insert_line + ", "
