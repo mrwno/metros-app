@@ -125,31 +125,44 @@ class MainWindow(QMainWindow):
         _hops = int(self.hop_box.currentText())
 
         self.rows = []
+        self.rows2 = []
+        self.res = []
         route=[]
-        #if _hops >= 1 : 
-            #self.cursor.execute(""f" SELECT distinct C.name,E.route_I,D.name FROM subway AS A,subway AS B,nodes AS C, nodes AS D,paris_to AS E WHERE  (C.name=$${_fromstation}$$ AND C.stop_I=A.from_stop_I) AND (D.name=$${_tostation}$$ AND D.stop_I=B.to_stop_I) AND (A.route_I_counts=B.route_I_counts) AND  A.counts[1]=E.route_I""")
-            #self.conn.commit()
-            #self.rows += self.cursor.fetchall()
-
-        if _hops >= 2 :
-            self.cursor.execute(""f" SELECT distinct E.name,H.route_name,F.name,I.route_name,G.name FROM subway AS A,subway AS B,subway AS C,nodes AS E, nodes AS F,nodes AS G,paris_to AS H,paris_to AS I WHERE  (A.to_stop_I=E.stop_I) AND (E.name=$${_fromstation}$$) AND A.to_stop_I=B.from_stop_I AND B.to_stop_I=C.from_stop_I  AND (C.to_stop_I=G.stop_I AND G.name=$${_tostation}$$ AND B.to_stop_I=F.stop_I AND H.route_I=A.counts[1] AND I.route_I=C.counts[1])""")
+        if _hops >= 1 : 
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
             self.conn.commit()
             self.rows += self.cursor.fetchall()
 
-        if len(self.rows) == 0 : 
+        for i in range(len(self.rows)):
+            for element in self.rows[i][1]:
+                for elements in self.rows[i][3]:
+                    if element == elements:
+                        print("mon élement 1 est", element)
+                        print("mon élement 2 est", elements)
+                        for j in range(len(self.rows[-1])-1):
+                            print(len(self.rows[-1]))
+                            if (j != 1):
+                                self.res.append(self.rows[i][j])
+                            else:
+                                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
+                                self.conn.commit()
+                                self.rows2 += self.cursor.fetchall()
+                                self.res.append(self.rows2[0][0])
+        
+        if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
             self.tableWidget.setColumnCount(0)
             return
 
-        numrows = len(self.rows)
-        numcols = len(self.rows[-1])
+        numrows = len(self.res)
+        numcols = (_hops * 2)+1
         self.tableWidget.setRowCount(numrows)
         self.tableWidget.setColumnCount(numcols)
 
         i = 0
-        for row in self.rows : 
+        for row in self.res : 
             j = 0
-            for col in row :
+            for col in self.res :
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(col)))
                 j = j + 1
             i = i + 1
