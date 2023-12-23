@@ -44,12 +44,24 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.from_box)
 
+        predefined_value = "Saint-Denis-Université"
+        self.from_box.addItem(predefined_value)
+
+        controls_panel.addWidget(_label)
+        controls_panel.addWidget(self.from_box)
+        #Sert à? mettre des valeurs pré?dé?finies dans le From
         _label = QLabel('  To: ', self)
         _label.setFixedSize(15,15)
         self.to_box = QComboBox() 
         self.to_box.setEditable(True)
         self.to_box.completer().setCompletionMode(QCompleter.PopupCompletion)
         self.to_box.setInsertPolicy(QComboBox.NoInsert)
+        controls_panel.addWidget(_label)
+        controls_panel.addWidget(self.to_box)
+        #Sert à? mettre des valeurs pré?dé?finies dans le To
+        predefined_value = "Basilique de Saint-Denis"
+        self.to_box.addItem(predefined_value)
+
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.to_box)
 
@@ -74,7 +86,7 @@ class MainWindow(QMainWindow):
         self.maptype_box.currentIndexChanged.connect(self.webView.setMap)
         controls_panel.addWidget(self.maptype_box)
 
-        _label = QLabel('M???thode: ', self)
+        _label = QLabel('Méthode: ', self)
         _label.setFixedSize(20,20)
         self.meth_box = QComboBox() 
         self.meth_box.addItems( ['Metro', 'Tram', 'Bus', 'Walk', 'Train','Tout'] )
@@ -125,58 +137,56 @@ class MainWindow(QMainWindow):
         _hops = int(self.hop_box.currentText())
 
         self.rows = []
-        self.rows2=[]
+        self.rows2 = []
+        self.res = []
         route=[]
-
         if _hops >= 1 : 
-            self.cursor.execute(""f" SELECT C.name,D.name,A.bus_id,B.bus_id FROM subway AS A,subway AS B, nodes AS C,nodes AS D WHERE A.from_stop_I=C.stop_I AND C.name=$${_fromstation}$$ AND B.to_stop_I=D.stop_I AND  D.name=$${_tostation}$$  """)
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
             self.conn.commit()
             self.rows += self.cursor.fetchall()
-
-            for i in range(len(self.rows)):
-                for j in range(len(self.rows[i][2])):
-                    if(self.rows[i][2][j] in self.rows[i][3]):
-                        #print("Je veux vé?rifier", self.rows[i][3])
-                        #print("Mon rows est", self.rows[i][2][j])
-                        #print("ma ligne est \n",self.rows[i])
-                        print(self.rows[0])
-                        print("je vais ajouter ",self.rows[i][2][j])
-                        print("  qui se trouve dans ",self.rows[i][3])
-                        self.rows[j]+=(self.rows[i][2][j],0)
-
-        #if _hops >= 2 :
-            #self.cursor.execute(""f" SELECT C.name, D.name 
-            #FROM (subway as A CROSS JOIN subway AS B ),nodes as C,nodes as D 
-            #WHERE A.to_stop_I = B.from_stop_I AND A.counts[1]=B.counts[1] AND (A.to_stop_I=C.stop_I) AND (C.name=$${_fromstation}$$) AND (B.to_stop_I=D.stop_I) """)
-            
-
-           # SELECT distinct E.name,H.route_name,F.name,I.route_name,G.name 
-            #FROM subway AS A,subway AS B,subway AS C,nodes AS E, nodes AS F,nodes AS G,paris_to AS H,paris_to AS I 
-            #WHERE  (A.to_stop_I=E.stop_I) AND (E.name=$${_fromstation}$$) AND A.to_stop_I=B.from_stop_I AND B.to_stop_I=C.from_stop_I  AND (C.to_stop_I=G.stop_I AND G.name=$${_tostation}$$ AND B.to_stop_I=F.stop_I AND H.route_I=A.counts[1] AND I.route_I=C.counts[1])""")
-            #self.conn.commit()
-            #self.rows += self.cursor.fetchall()
-
-        if len(self.rows) == 0 : 
+            print(self.rows)
+        for i in range(len(self.rows)):
+            print("Je vais faire", len(self.rows))
+            for element in self.rows[i][1]:
+                for elements in self.rows[i][3]:
+                    if element == elements:
+                        print("mon é?lé?ment 1 est", element)
+                        print("mon é?lé?ment 2 est", elements)
+                        for j in range(len(self.rows[-1])-1):
+                            print(j)
+                            if (j != 1):
+                                print("je vais ajouter",self.rows[i][j])
+                                self.res.append(self.rows[i][j])
+                            else:
+                                print("je vais executer cette commande")
+                                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
+                                self.conn.commit()
+                                self.rows2 += self.cursor.fetchall()
+                                self.res.append(self.rows2[0][0])
+       
+            print("Mon res est",self.res)
+        
+        if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
             self.tableWidget.setColumnCount(0)
             return
 
-        numrows = len(self.rows)
-        numcols = len(self.rows[-1])
+        numrows = len([self.res])
+        numcols = (_hops * 2)+1
         self.tableWidget.setRowCount(numrows)
         self.tableWidget.setColumnCount(numcols)
 
         i = 0
-        for row in self.rows : 
+        for row in self.res : 
             j = 0
-            for col in row :
+            for col in self.res :
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(col)))
                 j = j + 1
             i = i + 1
 
         header = self.tableWidget.horizontalHeader()
         j = 0
-        while j < numcols : 
+        while j < numcols :
             header.setSectionResizeMode(j, QHeaderView.ResizeToContents)
             j = j+1
         
