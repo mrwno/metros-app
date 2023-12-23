@@ -125,44 +125,51 @@ class MainWindow(QMainWindow):
         _hops = int(self.hop_box.currentText())
 
         self.rows = []
-        self.rows2 = []
-        self.res = []
+        self.rows2=[]
         route=[]
+
         if _hops >= 1 : 
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+            self.cursor.execute(""f" SELECT C.name,D.name,A.bus_id,B.bus_id FROM subway AS A,subway AS B, nodes AS C,nodes AS D WHERE A.from_stop_I=C.stop_I AND C.name=$${_fromstation}$$ AND B.to_stop_I=D.stop_I AND  D.name=$${_tostation}$$  """)
             self.conn.commit()
             self.rows += self.cursor.fetchall()
 
-        for i in range(len(self.rows)):
-            for element in self.rows[i][1]:
-                for elements in self.rows[i][3]:
-                    if element == elements:
-                        print("mon élement 1 est", element)
-                        print("mon élement 2 est", elements)
-                        for j in range(len(self.rows[-1])-1):
-                            print(len(self.rows[-1]))
-                            if (j != 1):
-                                self.res.append(self.rows[i][j])
-                            else:
-                                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
-                                self.conn.commit()
-                                self.rows2 += self.cursor.fetchall()
-                                self.res.append(self.rows2[0][0])
-        
-        if len(self.res) == 0 : 
+            for i in range(len(self.rows)):
+                for j in range(len(self.rows[i][2])):
+                    if(self.rows[i][2][j] in self.rows[i][3]):
+                        #print("Je veux vé?rifier", self.rows[i][3])
+                        #print("Mon rows est", self.rows[i][2][j])
+                        #print("ma ligne est \n",self.rows[i])
+                        print(self.rows[0])
+                        print("je vais ajouter ",self.rows[i][2][j])
+                        print("  qui se trouve dans ",self.rows[i][3])
+                        self.rows[j]+=(self.rows[i][2][j],0)
+
+        #if _hops >= 2 :
+            #self.cursor.execute(""f" SELECT C.name, D.name 
+            #FROM (subway as A CROSS JOIN subway AS B ),nodes as C,nodes as D 
+            #WHERE A.to_stop_I = B.from_stop_I AND A.counts[1]=B.counts[1] AND (A.to_stop_I=C.stop_I) AND (C.name=$${_fromstation}$$) AND (B.to_stop_I=D.stop_I) """)
+            
+
+           # SELECT distinct E.name,H.route_name,F.name,I.route_name,G.name 
+            #FROM subway AS A,subway AS B,subway AS C,nodes AS E, nodes AS F,nodes AS G,paris_to AS H,paris_to AS I 
+            #WHERE  (A.to_stop_I=E.stop_I) AND (E.name=$${_fromstation}$$) AND A.to_stop_I=B.from_stop_I AND B.to_stop_I=C.from_stop_I  AND (C.to_stop_I=G.stop_I AND G.name=$${_tostation}$$ AND B.to_stop_I=F.stop_I AND H.route_I=A.counts[1] AND I.route_I=C.counts[1])""")
+            #self.conn.commit()
+            #self.rows += self.cursor.fetchall()
+
+        if len(self.rows) == 0 : 
             self.tableWidget.setRowCount(0)
             self.tableWidget.setColumnCount(0)
             return
 
-        numrows = len(self.res)
-        numcols = (_hops * 2)+1
+        numrows = len(self.rows)
+        numcols = len(self.rows[-1])
         self.tableWidget.setRowCount(numrows)
         self.tableWidget.setColumnCount(numcols)
 
         i = 0
-        for row in self.res : 
+        for row in self.rows : 
             j = 0
-            for col in self.res :
+            for col in row :
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(col)))
                 j = j + 1
             i = i + 1
