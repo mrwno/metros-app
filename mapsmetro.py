@@ -174,7 +174,7 @@ class MainWindow(QMainWindow):
             for ligne_res7 in self.res7:
                 for ligne_res_new in self.res_new:
                     # Vérifier si les critères de fusion sont satisfaits
-                    if ligne_res7[2] == ligne_res_new[0]:
+                    if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]):
                         # Fusionner les lignes en créant une nouvelle liste
                         nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
                         # Ajouter la nouvelle ligne au tableau combiné
