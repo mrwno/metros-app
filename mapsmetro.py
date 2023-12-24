@@ -143,12 +143,13 @@ class MainWindow(QMainWindow):
         self.res2=[]
         self.res3=[]
         route=[]
-        if _hops >= 1 : 
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
-            self.conn.commit()
-            self.rows += self.cursor.fetchall()
+        #if _hops >= 1 : 
+            #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+            #self.conn.commit()
+            #self.rows += self.cursor.fetchall()
             #print(self.rows)
-            self.res=self.compare2(self.rows)
+            #self.res=self.compare2(self.rows)
+            
         if _hops >= 2 :
             self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
             self.conn.commit()
@@ -173,11 +174,11 @@ class MainWindow(QMainWindow):
             self.res_combined = []
             for ligne_res7 in self.res7:
                 for ligne_res_new in self.res_new:
-                    # Vérifier si les critères de fusion sont satisfaits
+                    # Verifier si les criteres de fusion sont satisfaits
                     if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]):
-                        # Fusionner les lignes en créant une nouvelle liste
+                        # Fusionner les lignes en creant une nouvelle liste
                         nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
-                        # Ajouter la nouvelle ligne au tableau combiné
+                        # Ajouter la nouvelle ligne au tableau combine
                         self.res_combined.append(nouvelle_ligne)
             self.res += self.res_combined
 
@@ -185,6 +186,7 @@ class MainWindow(QMainWindow):
         #print("##################################################################################")
         #print("Mon res final est ",self.res_new)"""
         
+        self.res=self.res_combined
         if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
             self.tableWidget.setColumnCount(0)
@@ -197,9 +199,11 @@ class MainWindow(QMainWindow):
 
         i = 0
         for row in self.res : 
+            print("Ma ligne est ",row)
             j = 0
-            for col in self.res :
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(col)))
+            for colonne in row :
+                print("Ma colonne est",colonne)
+                self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
                 j = j + 1
             i = i + 1
 
@@ -239,8 +243,9 @@ class MainWindow(QMainWindow):
                                 self.conn.commit()
                                 self.rows2 = self.cursor.fetchall()
                                 tuple=tuple+(self.rows2[0][0],)
-            if(len(tuple)>3):
+            if(len(tuple)>3 ):
                 self.res.append((tuple[0],tuple[1],tuple[2]))
+                
             else:
                 self.res.append(tuple)
 
@@ -440,4 +445,3 @@ if __name__ == '__main__':
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
-
