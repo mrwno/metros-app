@@ -138,37 +138,40 @@ class MainWindow(QMainWindow):
 
         self.rows = []
         self.rows2 = []
-        self.rows3=[]
+        self.rows_new=[]
         self.res = []
         self.res2=[]
         self.res3=[]
         route=[]
-        #if _hops >= 1 : 
-            #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+        if _hops >= 1 : 
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+            self.conn.commit()
+            self.rows += self.cursor.fetchall()
+            print(self.rows)
+            self.res=self.compare2(self.rows)
+
+        #if _hops >= 2 : 
+            #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
             #self.conn.commit()
             #self.rows += self.cursor.fetchall()
             #print(self.rows)
-            #self.res=self.compare(self.rows)
-
-        if _hops >= 2 : 
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
-            self.conn.commit()
-            self.rows += self.cursor.fetchall()
-            #print(self.rows)
-            self.res2=self.compare(self.rows)
-            print("Mon rows est",self.res2)
-            for e in range(len(self.res2)):
-                _fromstation2=self.res2[e][2]
-                print("Mon from_station est",_fromstation2)
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation2}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
-                self.conn.commit()
-                self.rows3 += self.cursor.fetchall()
-                self.res3=self.compare(self.rows3)
+            #self.res2=self.compare(self.rows)
+            #print("Mon rows est",self.res2)
+            #for e in range(len(self.res2)):
+                #print("##############################################")
+                #fromi=self.res2[e][2]
+                #print("Mon from_station est",fromi)
+                #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+                #self.conn.commit()
+                #self.rows_new += self.cursor.fetchall()
+                #self.rows=self.rows_new
+                #self.res_new=self.compare(self.rows)
+                #print("Mon res3  est donc ",self.res_new)
                 
                 
             
-        print("##################################################################################")
-        print("Mon res final est ",self.res3)
+        #print("##################################################################################")
+        #print("Mon res final est ",self.res_new)"""
         
         if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
@@ -230,7 +233,32 @@ class MainWindow(QMainWindow):
                 self.res2.append(element)
         #print("Mon res2 est",self.res2[8][2])
         return self.res2
+    
+    def compare2(self,rows):
+        self.rows2 = []
+        self.res = []
+        for i in range(len(self.rows)):
+            #print("Je vais faire", len(self.rows))
+            for element in self.rows[i][1]:
+                for elements in self.rows[i][3]:
+                    if element == elements:
+                        print("mon element 1 est", element)
+                        print("mon element 2 est", elements)
+                        for j in range(len(self.rows[-1])-1):
+                            print(j)
+                            if (j != 1):
+                                #print("je vais ajouter",self.rows[i][j])
+                                self.res.append(self.rows[i][j])
 
+                            else:
+                                #print("je vais executer cette commande")
+                                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
+                                self.conn.commit()
+                                self.rows2 += self.cursor.fetchall()
+                                self.res.append(self.rows2[0][0])
+
+        print("Mon res est",self.res)
+        return self.res
     def button_Clear(self):
         self.webView.clearMap(self.maptype_box.currentIndex())
         self.startingpoint = True
