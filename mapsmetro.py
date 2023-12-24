@@ -138,8 +138,10 @@ class MainWindow(QMainWindow):
 
         self.rows = []
         self.rows2 = []
+        self.rows3=[]
         self.res = []
         self.res2=[]
+        self.res3=[]
         route=[]
         #if _hops >= 1 : 
             #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
@@ -152,18 +154,21 @@ class MainWindow(QMainWindow):
             self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
             self.conn.commit()
             self.rows += self.cursor.fetchall()
-            print(self.rows)
-            self.res=self.compare(self.rows)
-            for e in range(1):
-                _fromstation2=self.res[e][2]
+            #print(self.rows)
+            self.res2=self.compare(self.rows)
+            print("Mon rows est",self.res2)
+            for e in range(len(self.res2)):
+                _fromstation2=self.res2[e][2]
+                print("Mon from_station est",_fromstation2)
                 self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation2}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
                 self.conn.commit()
-                self.rows2 += self.cursor.fetchall()
-                self.res2=self.compare(self.rows2)
+                self.rows3 += self.cursor.fetchall()
+                self.res3=self.compare(self.rows3)
+                
                 
             
         print("##################################################################################")
-        print("Mon res final est ",self.res2)
+        print("Mon res final est ",self.res3)
         
         if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
@@ -192,8 +197,8 @@ class MainWindow(QMainWindow):
         self.update()	
 
     def compare(self,rows):
-        print("Mon res est",self.rows)
-        print("##################################################################################")
+        #print("Mon res est",self.rows)
+        #print("##################################################################################")
         self.rows2 = []
         self.res = []
         self.res2=[]
@@ -223,7 +228,7 @@ class MainWindow(QMainWindow):
         for element in self.res: 
             if element != ():
                 self.res2.append(element)
-        print("Mon res2 est",self.res2)
+        #print("Mon res2 est",self.res2[8][2])
         return self.res2
 
     def button_Clear(self):
