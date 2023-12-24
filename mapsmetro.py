@@ -143,12 +143,12 @@ class MainWindow(QMainWindow):
         self.res2=[]
         self.res3=[]
         route=[]
-        #if _hops >= 1 : 
-            #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
-            #self.conn.commit()
-            #self.rows += self.cursor.fetchall()
-            #print(self.rows)
-            #self.res=self.compare2(self.rows)
+        if _hops >= 1 : 
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+            self.conn.commit()
+            self.rows += self.cursor.fetchall()
+            print(self.rows)
+            self.res+=self.compare2(self.rows)
             
         if _hops >= 2 :
             self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
@@ -176,8 +176,11 @@ class MainWindow(QMainWindow):
                 for ligne_res_new in self.res_new:
                     # Verifier si les criteres de fusion sont satisfaits
                     if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]):
-                        # Fusionner les lignes en creant une nouvelle liste
-                        nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
+                        if (ligne_res_new[0] == ligne_res_new[2]):
+                            nouvelle_ligne = ligne_res7
+                        else :
+                            # Fusionner les lignes en creant une nouvelle liste
+                            nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
                         # Ajouter la nouvelle ligne au tableau combine
                         self.res_combined.append(nouvelle_ligne)
             self.res += self.res_combined
@@ -186,13 +189,14 @@ class MainWindow(QMainWindow):
         #print("##################################################################################")
         #print("Mon res final est ",self.res_new)"""
         
-        self.res=self.res_combined
+        self.res = [list(x) for x in set(tuple(x) for x in self.res_combined)]
+
         if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
             self.tableWidget.setColumnCount(0)
             return
 
-        numrows = len([self.res])
+        numrows = len(self.res)
         numcols = (_hops * 2)+1
         self.tableWidget.setRowCount(numrows)
         self.tableWidget.setColumnCount(numcols)
@@ -213,14 +217,15 @@ class MainWindow(QMainWindow):
             header.setSectionResizeMode(j, QHeaderView.ResizeToContents)
             j = j+1
         
-        self.update()	
+        self.update()
+
 
    
     def compare(self,rows):
         #print("Mon res est",self.rows)
         #print("##################################################################################")
         self.rows2 = []
-        self.res = []
+        self.rs = []
         self.res2=[]
         for i in range(len(self.rows)):
             #print("Je vais faire", len(self.rows))
@@ -244,12 +249,12 @@ class MainWindow(QMainWindow):
                                 self.rows2 = self.cursor.fetchall()
                                 tuple=tuple+(self.rows2[0][0],)
             if(len(tuple)>3 ):
-                self.res.append((tuple[0],tuple[1],tuple[2]))
+                self.rs.append((tuple[0],tuple[1],tuple[2]))
                 
             else:
-                self.res.append(tuple)
+                self.rs.append(tuple)
 
-        for element in self.res: 
+        for element in self.rs: 
             if element != () :
                 self.res2.append(element)
         #print("Mon res2 est",self.res2[8][2])
@@ -261,7 +266,7 @@ class MainWindow(QMainWindow):
 
     def compare2(self,rows):
         self.rows2 = []
-        self.res = []
+        self.rs = []
         for i in range(len(self.rows)):
             #print("Je vais faire", len(self.rows))
             for element in self.rows[i][1]:
@@ -273,17 +278,17 @@ class MainWindow(QMainWindow):
                             print(j)
                             if (j != 1):
                                 #print("je vais ajouter",self.rows[i][j])
-                                self.res.append(self.rows[i][j])
+                                self.rs.append(self.rows[i][j])
 
                             else:
                                 #print("je vais executer cette commande")
                                 self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
                                 self.conn.commit()
                                 self.rows2 += self.cursor.fetchall()
-                                self.res.append(self.rows2[0][0])
+                                self.rs.append(self.rows2[0][0])
 
-        print("Mon res est",self.res)
-        return self.res
+        print("Mon res est",self.rs)
+        return self.rs
 
     def button_Clear(self):
         self.webView.clearMap(self.maptype_box.currentIndex())
@@ -445,3 +450,4 @@ if __name__ == '__main__':
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
