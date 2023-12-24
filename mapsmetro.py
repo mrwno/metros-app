@@ -139,6 +139,7 @@ class MainWindow(QMainWindow):
         self.rows = []
         self.rows2 = []
         self.res = []
+        self.res2=[]
         route=[]
         #if _hops >= 1 : 
             #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
@@ -153,8 +154,16 @@ class MainWindow(QMainWindow):
             self.rows += self.cursor.fetchall()
             print(self.rows)
             self.res=self.compare(self.rows)
+            for e in range(1):
+                _fromstation2=self.res[e][2]
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation2}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+                self.conn.commit()
+                self.rows2 += self.cursor.fetchall()
+                self.res2=self.compare(self.rows2)
+                
             
-            
+        print("##################################################################################")
+        print("Mon res final est ",self.res2)
         
         if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
@@ -183,30 +192,39 @@ class MainWindow(QMainWindow):
         self.update()	
 
     def compare(self,rows):
+        print("Mon res est",self.rows)
+        print("##################################################################################")
         self.rows2 = []
         self.res = []
+        self.res2=[]
         for i in range(len(self.rows)):
             #print("Je vais faire", len(self.rows))
+            tuple=()
             for element in self.rows[i][1]:
                 for elements in self.rows[i][3]:
                     if element == elements:
-                        print("mon element 1 est", element)
-                        print("mon element 2 est", elements)
+                        #print("mon element 1 est", element)
+                        #print("mon element 2 est", elements)
                         for j in range(len(self.rows[-1])-1):
-                            print(j)
+                            #print(j)
                             if (j != 1):
                                 #print("je vais ajouter",self.rows[i][j])
-                                self.res.append(self.rows[i][j])
+                                tuple=tuple+(self.rows[i][j],)
+                                
                                 
                             else:
                                 #print("je vais executer cette commande")
                                 self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
                                 self.conn.commit()
                                 self.rows2 += self.cursor.fetchall()
-                                self.res.append(self.rows2[0][0])
+                                tuple=tuple+(self.rows2[0][0],)
+            self.res.append(tuple)
            
-        print("Mon res est",self.res)
-        return self.res
+        for element in self.res: 
+            if element != ():
+                self.res2.append(element)
+        print("Mon res2 est",self.res2)
+        return self.res2
 
     def button_Clear(self):
         self.webView.clearMap(self.maptype_box.currentIndex())
