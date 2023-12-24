@@ -44,12 +44,12 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.from_box)
 
-        predefined_value = "Saint-Denis-Université"
+        predefined_value = "Porte de Clichy"
         self.from_box.addItem(predefined_value)
 
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.from_box)
-        #Sert à? mettre des valeurs pré?dé?finies dans le From
+        #Sert ??? mettre des valeurs pr???d???finies dans le From
         _label = QLabel('  To: ', self)
         _label.setFixedSize(15,15)
         self.to_box = QComboBox() 
@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
         self.to_box.setInsertPolicy(QComboBox.NoInsert)
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.to_box)
-        #Sert à? mettre des valeurs pré?dé?finies dans le To
+        #Sert ??? mettre des valeurs pr???d???finies dans le To
         predefined_value = "Basilique de Saint-Denis"
         self.to_box.addItem(predefined_value)
 
@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
         self.maptype_box.currentIndexChanged.connect(self.webView.setMap)
         controls_panel.addWidget(self.maptype_box)
 
-        _label = QLabel('Méthode: ', self)
+        _label = QLabel('M??thode: ', self)
         _label.setFixedSize(20,20)
         self.meth_box = QComboBox() 
         self.meth_box.addItems( ['Metro', 'Tram', 'Bus', 'Walk', 'Train','Tout'] )
@@ -140,31 +140,21 @@ class MainWindow(QMainWindow):
         self.rows2 = []
         self.res = []
         route=[]
-        if _hops >= 1 : 
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+        #if _hops >= 1 : 
+            #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+            #self.conn.commit()
+            #self.rows += self.cursor.fetchall()
+            #print(self.rows)
+            #self.res=self.compare(self.rows)
+
+        if _hops >= 2 : 
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
             self.conn.commit()
             self.rows += self.cursor.fetchall()
             print(self.rows)
-        for i in range(len(self.rows)):
-            print("Je vais faire", len(self.rows))
-            for element in self.rows[i][1]:
-                for elements in self.rows[i][3]:
-                    if element == elements:
-                        print("mon é?lé?ment 1 est", element)
-                        print("mon é?lé?ment 2 est", elements)
-                        for j in range(len(self.rows[-1])-1):
-                            print(j)
-                            if (j != 1):
-                                print("je vais ajouter",self.rows[i][j])
-                                self.res.append(self.rows[i][j])
-                            else:
-                                print("je vais executer cette commande")
-                                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
-                                self.conn.commit()
-                                self.rows2 += self.cursor.fetchall()
-                                self.res.append(self.rows2[0][0])
-       
-            print("Mon res est",self.res)
+            self.res=self.compare(self.rows)
+            
+            
         
         if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
@@ -191,6 +181,32 @@ class MainWindow(QMainWindow):
             j = j+1
         
         self.update()	
+
+    def compare(self,rows):
+        self.rows2 = []
+        self.res = []
+        for i in range(len(self.rows)):
+            #print("Je vais faire", len(self.rows))
+            for element in self.rows[i][1]:
+                for elements in self.rows[i][3]:
+                    if element == elements:
+                        print("mon element 1 est", element)
+                        print("mon element 2 est", elements)
+                        for j in range(len(self.rows[-1])-1):
+                            print(j)
+                            if (j != 1):
+                                #print("je vais ajouter",self.rows[i][j])
+                                self.res.append(self.rows[i][j])
+                                
+                            else:
+                                #print("je vais executer cette commande")
+                                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
+                                self.conn.commit()
+                                self.rows2 += self.cursor.fetchall()
+                                self.res.append(self.rows2[0][0])
+           
+        print("Mon res est",self.res)
+        return self.res
 
     def button_Clear(self):
         self.webView.clearMap(self.maptype_box.currentIndex())
