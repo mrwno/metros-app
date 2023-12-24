@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.from_box)
 
-        predefined_value = "Porte de Clichy"
+        predefined_value = "Front Populaire"
         self.from_box.addItem(predefined_value)
 
         controls_panel.addWidget(_label)
@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.to_box)
         #Sert ??? mettre des valeurs pr???d???finies dans le To
-        predefined_value = "Basilique de Saint-Denis"
+        predefined_value = "Gare du Nord"
         self.to_box.addItem(predefined_value)
 
         controls_panel.addWidget(_label)
@@ -147,26 +147,25 @@ class MainWindow(QMainWindow):
             self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
             self.conn.commit()
             self.rows += self.cursor.fetchall()
-            print(self.rows)
+            #print(self.rows)
             self.res=self.compare2(self.rows)
 
-        #if _hops >= 2 : 
-            #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
-            #self.conn.commit()
-            #self.rows += self.cursor.fetchall()
-            #print(self.rows)
-            #self.res2=self.compare(self.rows)
-            #print("Mon rows est",self.res2)
-            #for e in range(len(self.res2)):
-                #print("##############################################")
-                #fromi=self.res2[e][2]
-                #print("Mon from_station est",fromi)
-                #self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
-                #self.conn.commit()
-                #self.rows_new += self.cursor.fetchall()
-                #self.rows=self.rows_new
-                #self.res_new=self.compare(self.rows)
-                #print("Mon res3  est donc ",self.res_new)
+        if _hops >= 2 : 
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+            self.conn.commit()
+            self.rows += self.cursor.fetchall()
+            self.res7=self.compare(self.rows)
+            print("Mon rows est",self.res2)
+            for e in range(len(self.res2)):
+                print("##############################################")
+                fromi=self.res7[e][2]
+                print("Mon from_station est",fromi)
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+                self.conn.commit()
+                self.rows_new += self.cursor.fetchall()
+                self.rows=self.rows_new
+                self.res_new=self.compare(self.rows)
+                print("Mon res3  est donc ",self.res_new)
                 
                 
             
@@ -259,6 +258,7 @@ class MainWindow(QMainWindow):
 
         print("Mon res est",self.res)
         return self.res
+
     def button_Clear(self):
         self.webView.clearMap(self.maptype_box.currentIndex())
         self.startingpoint = True
