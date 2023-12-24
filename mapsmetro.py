@@ -149,12 +149,14 @@ class MainWindow(QMainWindow):
             self.rows += self.cursor.fetchall()
             #print(self.rows)
             self.res=self.compare2(self.rows)
-
-        if _hops >= 2 : 
+        if _hops >= 2 :
             self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
             self.conn.commit()
             self.rows += self.cursor.fetchall()
             self.res7=self.compare(self.rows)
+            for elementsss in self.res7:
+                if self.res7.count(elementsss)>=2:
+                    self.res7.remove(elementsss)
             print("Mon rows est",self.res7)
             for e in range(len(self.res7)):
                 print("##############################################")
@@ -164,7 +166,9 @@ class MainWindow(QMainWindow):
                 self.conn.commit()
                 self.rows_new += self.cursor.fetchall()
                 self.rows=self.rows_new
+
                 self.res_new=self.compare(self.rows)
+
                 print("Mon res3  est donc ",self.res_new)
             self.res_combined = []
             for ligne_res7 in self.res7:
@@ -175,7 +179,7 @@ class MainWindow(QMainWindow):
                         nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
                         # Ajouter la nouvelle ligne au tableau combiné
                         self.res_combined.append(nouvelle_ligne)
-            self.res = self.res_combined
+            self.res += self.res_combined
 
         print("mon final est ", self.res_combined)
         #print("##################################################################################")
@@ -233,12 +237,15 @@ class MainWindow(QMainWindow):
                                 #print("je vais executer cette commande")
                                 self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
                                 self.conn.commit()
-                                self.rows2 += self.cursor.fetchall()
+                                self.rows2 = self.cursor.fetchall()
                                 tuple=tuple+(self.rows2[0][0],)
-            self.res.append(tuple)
+            if(len(tuple)>3):
+                self.res.append((tuple[0],tuple[1],tuple[2]))
+            else:
+                self.res.append(tuple)
 
         for element in self.res: 
-            if element != () and len(element)==3:
+            if element != () :
                 self.res2.append(element)
         #print("Mon res2 est",self.res2[8][2])
 
@@ -246,7 +253,6 @@ class MainWindow(QMainWindow):
             if self.res2.count(element)>=2:
                 self.res2.remove(element)
         return self.res2
-
 
     def compare2(self,rows):
         self.rows2 = []
