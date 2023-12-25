@@ -186,9 +186,10 @@ class MainWindow(QMainWindow):
             self.res += self.res_combined
         
         
-        if _hops == 3 : #ATTENTION  ++++++++++++++++++++
+        if _hops == 3  : #ATTENTION  ++++++++++++++++++++
             #je vais d abord m occuper du cote gauche
             self.rows=[]
+            self.res_combined=[]
             self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
             self.conn.commit()
             self.rows += self.cursor.fetchall()
@@ -220,14 +221,18 @@ class MainWindow(QMainWindow):
                     self.res9=self.compare(self.rows)
                 if len(self.res9) !=0:
                     print("Ma combinaison est",element,self.res9,element2)
+                    
+                    nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
+                    self.res_combined.append(nouveau)
+            self.res=self.res_combined
 
-                
-        print("mon final est ", self.res_combined)
         #print("##################################################################################")
         #print("Mon res final est ",self.res_new)"""
         
         #sert à? sé?parer les doublons
         self.res = [list(x) for x in set(tuple(x) for x in self.res_combined)]
+        
+        print("mon final est ", self.res)
 
         if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
@@ -241,10 +246,10 @@ class MainWindow(QMainWindow):
 
         i = 0
         for row in self.res : 
-            print("Ma ligne est ",row)
+            #print("Ma ligne est ",row)
             j = 0
             for colonne in row :
-                print("Ma colonne est",colonne)
+                #print("Ma colonne est",colonne)
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
                 j = j + 1
             i = i + 1
