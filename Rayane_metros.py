@@ -36,7 +36,7 @@ class MainWindow(QMainWindow):
         main.layout().addWidget(mysplit)
 
         _label = QLabel('From: ', self)
-        _label.setFixedSize(15,15)
+        _label.setFixedSize(30,30)
         self.from_box = QComboBox() 
         self.from_box.setEditable(True)
         self.from_box.completer().setCompletionMode(QCompleter.PopupCompletion)
@@ -51,7 +51,7 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(self.from_box)
         #Sert ??? mettre des valeurs pr???d???finies dans le From
         _label = QLabel('  To: ', self)
-        _label.setFixedSize(15,15)
+        _label.setFixedSize(20,20)
         self.to_box = QComboBox() 
         self.to_box.setEditable(True)
         self.to_box.completer().setCompletionMode(QCompleter.PopupCompletion)
@@ -65,8 +65,16 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.to_box)
 
+        _label = QLabel('Methode: ', self)
+        _label.setFixedSize(60,60)
+        self.meth_box = QComboBox() 
+        self.meth_box.addItems( ['Metro', 'Tram', 'Bus', 'Walk', 'Train','Tout'] )
+        self.meth_box.setCurrentIndex( 0 )
+        controls_panel.addWidget(_label)
+        controls_panel.addWidget(self.meth_box)
+        
         _label = QLabel('Hops: ', self)
-        _label.setFixedSize(20,20)
+        _label.setFixedSize(30,30)
         self.hop_box = QComboBox() 
         self.hop_box.addItems( ['1', '2', '3', '4', '5'] )
         self.hop_box.setCurrentIndex( 0 )
@@ -86,13 +94,6 @@ class MainWindow(QMainWindow):
         self.maptype_box.currentIndexChanged.connect(self.webView.setMap)
         controls_panel.addWidget(self.maptype_box)
 
-        _label = QLabel('M??thode: ', self)
-        _label.setFixedSize(20,20)
-        self.meth_box = QComboBox() 
-        self.meth_box.addItems( ['Metro', 'Tram', 'Bus', 'Walk', 'Train','Tout'] )
-        self.meth_box.setCurrentIndex( 0 )
-        controls_panel.addWidget(_label)
-        controls_panel.addWidget(self.meth_box)
            
         self.connect_DB()
 
@@ -135,6 +136,7 @@ class MainWindow(QMainWindow):
         _fromstation = str(self.from_box.currentText())
         _tostation = str(self.to_box.currentText())
         _hops = int(self.hop_box.currentText())
+        self.valeur=str(self.meth_box.currentText()) #sert à? prendre le type de transport 
 
         self.rows = []
         self.rows2 = []
@@ -188,44 +190,89 @@ class MainWindow(QMainWindow):
         
         if _hops == 3  : #ATTENTION  ++++++++++++++++++++
             #je vais d abord m occuper du cote gauche
-            self.rows=[]
-            self.res_combined=[]
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
-            self.conn.commit()
-            self.rows += self.cursor.fetchall()
-            self.res7=self.compare(self.rows)
-            for elementsss in self.res7:
-                if self.res7.count(elementsss)>=2:
-                    self.res7.remove(elementsss)
-            print("Mon cote gauche est ",self.res7)
-            
-            self.rows=[]
-            #maintenant, je m occupe du cote droit
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
-            self.conn.commit()
-            self.rows += self.cursor.fetchall()
-            self.res8=self.compare(self.rows)
-            for elementsss in self.res8:
-                if self.res8.count(elementsss)>=2:
-                    self.res8.remove(elementsss)
-            print("\n###########Mon cote droit est",self.res8)
-            #je vais un lien entre les deux parties
-            self.rows=[]
-            for element in self.res7:
-                _from=element[2]
-                for element2 in self.res8:
-                    _to=element2[0]
-                    self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
-                    self.conn.commit()
-                    self.rows= self.cursor.fetchall()
-                    self.res9=self.compare(self.rows)
-                if len(self.res9) !=0:
-                    print("Ma combinaison est",element,self.res9,element2)
-                    
-                    nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
-                    self.res_combined.append(nouveau)
-            self.res=self.res_combined
+            if self.valeur=='Metro':
+                print("Ma valeur est",self.valeur)
+                self.rows=[]
+                self.res_combined=[]
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res7=self.compare(self.rows)
+                for elementsss in self.res7:
+                    if self.res7.count(elementsss)>=2:
+                        self.res7.remove(elementsss)
+                print("Mon cote gauche est ",self.res7)
+                
+                self.rows=[]
+                #maintenant, je m occupe du cote droit
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res8=self.compare(self.rows)
+                for elementsss in self.res8:
+                    if self.res8.count(elementsss)>=2:
+                        self.res8.remove(elementsss)
+                print("\n###########Mon cote droit est",self.res8)
+                #je vais un lien entre les deux parties
+                self.rows=[]
+                for element in self.res7:
+                    _from=element[2]
+                    for element2 in self.res8:
+                        _to=element2[0]
+                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
+                        self.conn.commit()
+                        self.rows= self.cursor.fetchall()
+                        self.res9=self.compare(self.rows)
+                    if len(self.res9) !=0:
+                        print("Ma combinaison est",element,self.res9,element2)
+                        
+                        nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
+                        self.res_combined.append(nouveau)
+                self.res=self.res_combined
+########################################################################################################"            
+            if self.valeur=='Bus':
+                print("Ma valeur est",self.valeur)
+                self.rows=[]
+                self.res_combined=[]
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM bus as A, bus AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res7=self.compare(self.rows)
+                for elementsss in self.res7:
+                    if self.res7.count(elementsss)>=2:
+                        self.res7.remove(elementsss)
+                print("Mon cote gauche est ",self.res7)
+                
+                self.rows=[]
+                #maintenant, je m occupe du cote droit
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM bus as A, bus AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res8=self.compare(self.rows)
+                for elementsss in self.res8:
+                    if self.res8.count(elementsss)>=2:
+                        self.res8.remove(elementsss)
+                print("\n###########Mon cote droit est",self.res8)
+                #je vais un lien entre les deux parties
+                self.rows=[]
+                for element in self.res7:
+                    _from=element[2]
+                    for element2 in self.res8:
+                        _to=element2[0]
+                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM bus as A, bus AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
+                        self.conn.commit()
+                        self.rows= self.cursor.fetchall()
+                        self.res9=self.compare(self.rows)
+                    if len(self.res9) !=0:
+                        print("Ma combinaison est",element,self.res9,element2)
+                        
+                        nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
+                        self.res_combined.append(nouveau)
+                self.res=self.res_combined
+#############################################################################################################
 
+            else:
+                print("je n'ai rien")
         #print("##################################################################################")
         #print("Mon res final est ",self.res_new)"""
         
