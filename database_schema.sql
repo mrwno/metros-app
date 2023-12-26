@@ -51,11 +51,7 @@ create table walk(
 from_stop_I numeric, 
 to_stop_I numeric,
 d numeric,
-duration_avg numeric,
-n_vehicles numeric,
-route_I_counts text,
-bus_id numeric[],
-route_id numeric[]
+d_walk numeric
 );
 
 create table combined(
@@ -67,7 +63,8 @@ duration_avg numeric,
 n_vehicles numeric,
 route_I_counts text,
 bus_id numeric[],
-route_id numeric[]
+route_id numeric[],
+route_type numeric
 );
 
 create table paris_to (
@@ -76,4 +73,4 @@ route_I numeric(10,6),
 route_name text ,
 route_type numeric(10,6)
 
-);
+)

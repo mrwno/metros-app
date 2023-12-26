@@ -13,7 +13,7 @@ for line in f:
             exit(1)
         item = items[i].replace("'", "''")
         insert_line = insert_line + "'" + item + "'"  # on ne met pas la virgule ici car ???a l'appliquerait ??? tous les attributs, pas seulement ??? g???o
-        if i == num_attributes-1 :
+        if i == num_attributes-2 :
             lst = items[i].split(",")
             insert_line = insert_line + ", '{"
             insert_line2 = ", '{"

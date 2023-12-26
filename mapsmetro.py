@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
             self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
             self.conn.commit()
             self.rows += self.cursor.fetchall()
-            print(self.rows)
+            #print(self.rows)
             self.res+=self.compare(self.rows)
             
         if _hops >= 2 :
@@ -159,11 +159,11 @@ class MainWindow(QMainWindow):
             for elementsss in self.res7:
                 if self.res7.count(elementsss)>=2:
                     self.res7.remove(elementsss)
-            print("Mon rows est",self.res7)
+            #print("Mon rows est",self.res7)
             for e in range(len(self.res7)):
-                print("##############################################")
+                #print("##############################################")
                 fromi=self.res7[e][2]
-                print("Mon from_station est",fromi)
+                #print("Mon from_station est",fromi)
                 self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
                 self.conn.commit()
                 self.rows_new += self.cursor.fetchall()
@@ -171,12 +171,12 @@ class MainWindow(QMainWindow):
 
                 self.res_new=self.compare(self.rows)
 
-                print("Mon res3  est donc ",self.res_new)
+                #print("Mon res3  est donc ",self.res_new)
             self.res_combined = []
             for ligne_res7 in self.res7:
                 for ligne_res_new in self.res_new:
                     # Verifier si les criteres de fusion sont satisfaits
-                    if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]) and (ligne_res_new[0] == ligne_res_new[2]):
+                    if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]) and (ligne_res_new[0] != ligne_res_new[2]):
                         # Fusionner les lignes en creant une nouvelle liste
                         nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
                         # Ajouter la nouvelle ligne au tableau combine
