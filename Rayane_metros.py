@@ -136,7 +136,7 @@ class MainWindow(QMainWindow):
         _fromstation = str(self.from_box.currentText())
         _tostation = str(self.to_box.currentText())
         _hops = int(self.hop_box.currentText())
-        self.valeur=str(self.meth_box.currentText()) #sert à? prendre le type de transport 
+        self.valeur=str(self.meth_box.currentText()) #sert ??? prendre le type de transport 
 
         self.rows = []
         self.rows2 = []
@@ -223,11 +223,11 @@ class MainWindow(QMainWindow):
                         self.conn.commit()
                         self.rows= self.cursor.fetchall()
                         self.res9=self.compare(self.rows)
-                    if len(self.res9) !=0:
-                        print("Ma combinaison est",element,self.res9,element2)
-                        
-                        nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
-                        self.res_combined.append(nouveau)
+                        if len(self.res9) !=0:
+    
+                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
+                            print("#######Ma combinaison est",nouveau)
+                            self.res_combined.append(nouveau)
                 self.res=self.res_combined
 ########################################################################################################"            
             if self.valeur=='Bus':
@@ -276,7 +276,7 @@ class MainWindow(QMainWindow):
         #print("##################################################################################")
         #print("Mon res final est ",self.res_new)"""
         
-        #sert à? sé?parer les doublons
+        #sert ??? s???parer les doublons
         self.res = [list(x) for x in set(tuple(x) for x in self.res_combined)]
         
         print("mon final est ", self.res)
