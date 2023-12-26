@@ -117,16 +117,27 @@ class MainWindow(QMainWindow):
     def table_Click(self):
         print("Row number double-clicked: ", self.tableWidget.currentRow())
         i = 0
-        for col in self.rows[self.tableWidget.currentRow()] :
+        j = 0
+        self.coord = []
+        for col in self.res[self.tableWidget.currentRow()] :
             print(f"{i} column value is: {col}")
-            if type(col)=='decimal.Decimal':
-                print(hello)
-
-      
+            if (i%2 == 0):
+                self.cursor.execute(""f" SELECT lat, lon FROM nodes WHERE nodes.name = $${col}$$""")
+                self.conn.commit()
+                self.coord += self.cursor.fetchall()
             i = i + 1
+        print(self.coord)
+        for j in self.coord:
+            self.webView.addMarker(j[0], j[1])
+            if j != self.coord[0]:
+                self.webView.addSegment(lat, lon, j[0], j[1])
+                lat = j[0]
+                lon = j[1]
+            else:
+                lat = j[0]
+                lon = j[1]
+                self.webView.addSegment(lat, lon, self.coord[1][0], self.coord[1][1])
 
-
-            
         
 
     def button_Go(self):
@@ -145,7 +156,7 @@ class MainWindow(QMainWindow):
         self.res3=[]
         route=[]
         if _hops >= 1 : 
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
             self.conn.commit()
             self.rows += self.cursor.fetchall()
             #print(self.rows)
@@ -419,4 +430,5 @@ if __name__ == '__main__':
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
 
