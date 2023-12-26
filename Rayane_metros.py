@@ -213,7 +213,7 @@ class MainWindow(QMainWindow):
                     if self.res8.count(elementsss)>=2:
                         self.res8.remove(elementsss)
                 print("\n###########Mon cote droit est",self.res8)
-                #je vais un lien entre les deux parties
+                #je fais un lien entre les deux parties
                 self.rows=[]
                 for element in self.res7:
                     _from=element[2]
@@ -224,7 +224,6 @@ class MainWindow(QMainWindow):
                         self.rows= self.cursor.fetchall()
                         self.res9=self.compare(self.rows)
                         if len(self.res9) !=0:
-    
                             nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
                             print("#######Ma combinaison est",nouveau)
                             self.res_combined.append(nouveau)
@@ -263,11 +262,88 @@ class MainWindow(QMainWindow):
                         self.conn.commit()
                         self.rows= self.cursor.fetchall()
                         self.res9=self.compare(self.rows)
-                    if len(self.res9) !=0:
-                        print("Ma combinaison est",element,self.res9,element2)
-                        
-                        nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
-                        self.res_combined.append(nouveau)
+                        if len(self.res9) !=0:
+                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
+                            print("#######Ma combinaison est",nouveau)
+                            self.res_combined.append(nouveau)
+                self.res=self.res_combined
+#############################################################################################################
+            if self.valeur=='Tram':
+                print("Ma valeur est",self.valeur)
+                self.rows=[]
+                self.res_combined=[]
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM tram as A, tram AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res7=self.compare(self.rows)
+                for elementsss in self.res7:
+                    if self.res7.count(elementsss)>=2:
+                        self.res7.remove(elementsss)
+                print("Mon cote gauche est ",self.res7)
+                
+                self.rows=[]
+                #maintenant, je m occupe du cote droit
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM tram as A, tram AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res8=self.compare(self.rows)
+                for elementsss in self.res8:
+                    if self.res8.count(elementsss)>=2:
+                        self.res8.remove(elementsss)
+                print("\n###########Mon cote droit est",self.res8)
+                #je vais un lien entre les deux parties
+                self.rows=[]
+                for element in self.res7:
+                    _from=element[2]
+                    for element2 in self.res8:
+                        _to=element2[0]
+                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM tram as A, tram AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
+                        self.conn.commit()
+                        self.rows= self.cursor.fetchall()
+                        self.res9=self.compare(self.rows)
+                        if len(self.res9) !=0:
+                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
+                            print("#######Ma combinaison est",nouveau)
+                            self.res_combined.append(nouveau)
+                self.res=self.res_combined
+#############################################################################################################
+            if self.valeur=='Walk': #ATTENTION IL FAUT REFAIRE LA TABLE WALK, ELLE A DES ELEMENTS DIFFERENTS QUE LES 3 AUTRES
+                print("Ma valeur est",self.valeur)
+                self.rows=[]
+                self.res_combined=[]
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM walk as A, walk AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res7=self.compare(self.rows)
+                for elementsss in self.res7:
+                    if self.res7.count(elementsss)>=2:
+                        self.res7.remove(elementsss)
+                print("Mon cote gauche est ",self.res7)
+                
+                self.rows=[]
+                #maintenant, je m occupe du cote droit
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM walk as A, walk AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res8=self.compare(self.rows)
+                for elementsss in self.res8:
+                    if self.res8.count(elementsss)>=2:
+                        self.res8.remove(elementsss)
+                print("\n###########Mon cote droit est",self.res8)
+                #je vais un lien entre les deux parties
+                self.rows=[]
+                for element in self.res7:
+                    _from=element[2]
+                    for element2 in self.res8:
+                        _to=element2[0]
+                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM walk as A, walk AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
+                        self.conn.commit()
+                        self.rows= self.cursor.fetchall()
+                        self.res9=self.compare(self.rows)
+                        if len(self.res9) !=0:
+                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
+                            print("#######Ma combinaison est",nouveau)
+                            self.res_combined.append(nouveau)
                 self.res=self.res_combined
 #############################################################################################################
 
