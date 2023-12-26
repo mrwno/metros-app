@@ -155,47 +155,64 @@ class MainWindow(QMainWindow):
         self.res2=[]
         self.res3=[]
         route=[]
-        if _hops >= 1 : 
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
-            self.conn.commit()
-            self.rows += self.cursor.fetchall()
-            #print(self.rows)
-            self.res+=self.compare(self.rows)
-            
-        if _hops >= 2 :
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
-            self.conn.commit()
-            self.rows += self.cursor.fetchall()
-            self.res7=self.compare(self.rows)
-            for elementsss in self.res7:
-                if self.res7.count(elementsss)>=2:
-                    self.res7.remove(elementsss)
-            #print("Mon rows est",self.res7)
-            for e in range(len(self.res7)):
-                #print("##############################################")
-                fromi=self.res7[e][2]
-                #print("Mon from_station est",fromi)
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+        if _meth == 'walk' or _meth == "combined":
+            if _hops >= 1 : 
+                self.cursor.execute(""f" SELECT distinct C.name, A.d_walk, D.name FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
                 self.conn.commit()
-                self.rows_new += self.cursor.fetchall()
-                self.rows=self.rows_new
+                self.res += self.cursor.fetchall()
+                
+            if _hops >= 2 :
+                self.cursor.execute(""f" With fromstation(from_name, to_name, dist) AS (SELECT distinct C.name, D.name, A.d_walk  FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I), tostation(from_name2,to_name2, dist2) AS (SELECT distinct C.name, D.name, A.d_walk FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND D.name = $${_tostation}$$ AND A.to_stop_I = D.stop_I) SELECT E.from_name, E.dist, E.from_name2, E.dist2, E.to_name2 FROM (fromstation INNER JOIN tostation ON (fromstation.to_name = tostation.from_name2)) AS E """)
+                self.conn.commit()
+                self.res += self.cursor.fetchall()
+                
+            if _hops >= 3 :
+                self.cursor.execute(""f" With fromstation(from_name, to_name, dist) AS (SELECT distinct C.name, D.name, A.d_walk  FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I), tostation(from_name2,to_name2, dist2) AS (SELECT distinct C.name, D.name, A.d_walk FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND D.name = $${_tostation}$$ AND A.to_stop_I = D.stop_I), midstation(from_name3,to_name3, dist3) AS (SELECT distinct C.name, D.name, A.d_walk FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND A.to_stop_I = D.stop_I) SELECT F.from_name, F.dist, F.from_name3, F.dist2, F.to_name3, F.dist3, F.from_name2 FROM ((fromstation INNER JOIN midstation ON (fromstation.to_name = midstation.from_name3)) INNER JOIN tostation ON (to_name3 = tostation.from_name2)) AS F""")
+                self.conn.commit()
+                self.res += self.cursor.fetchall()
 
-                self.res_new=self.compare(self.rows)
-
-                #print("Mon res3  est donc ",self.res_new)
-            self.res_combined = []
-            for ligne_res7 in self.res7:
-                for ligne_res_new in self.res_new:
-                    # Verifier si les criteres de fusion sont satisfaits
-                    if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]) and (ligne_res_new[0] != ligne_res_new[2]):
-                        # Fusionner les lignes en creant une nouvelle liste
-                        nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
-                        # Ajouter la nouvelle ligne au tableau combine
-                        self.res_combined.append(nouvelle_ligne)
-            self.res += self.res_combined
-
-        #print("##################################################################################")
-        #print("Mon res final est ",self.res_new)"""
+        if _meth != "walk":    
+            if _hops >= 1 : 
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                #print(self.rows)
+                self.res+=self.compare(self.rows)
+                
+            if _hops >= 2 :
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res7=self.compare(self.rows)
+                for elementsss in self.res7:
+                    if self.res7.count(elementsss)>=2:
+                        self.res7.remove(elementsss)
+                #print("Mon rows est",self.res7)
+                for e in range(len(self.res7)):
+                    #print("##############################################")
+                    fromi=self.res7[e][2]
+                    #print("Mon from_station est",fromi)
+                    self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+                    self.conn.commit()
+                    self.rows_new += self.cursor.fetchall()
+                    self.rows=self.rows_new
+    
+                    self.res_new=self.compare(self.rows)
+    
+                    #print("Mon res3  est donc ",self.res_new)
+                self.res_combined = []
+                for ligne_res7 in self.res7:
+                    for ligne_res_new in self.res_new:
+                        # Verifier si les criteres de fusion sont satisfaits
+                        if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]) and (ligne_res_new[0] != ligne_res_new[2]):
+                            # Fusionner les lignes en creant une nouvelle liste
+                            nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
+                            # Ajouter la nouvelle ligne au tableau combine
+                            self.res_combined.append(nouvelle_ligne)
+                self.res += self.res_combined
+    
+            #print("##################################################################################")
+            #print("Mon res final est ",self.res_new)"""
         
         self.res = [list(x) for x in set(tuple(x) for x in self.res)]
 
