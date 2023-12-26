@@ -68,7 +68,7 @@ class MainWindow(QMainWindow):
         _label = QLabel('Hops: ', self)
         _label.setFixedSize(20,20)
         self.hop_box = QComboBox() 
-        self.hop_box.addItems( ['1', '2', '3', '4', '5'] )
+        self.hop_box.addItems( ['1', '2', '3'] )
         self.hop_box.setCurrentIndex( 0 )
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.hop_box)
@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
         self.maptype_box.currentIndexChanged.connect(self.webView.setMap)
         controls_panel.addWidget(self.maptype_box)
 
-        _label = QLabel('M??thode: ', self)
+        _label = QLabel('Méthode: ', self)
         _label.setFixedSize(20,20)
         self.meth_box = QComboBox() 
         self.meth_box.addItems( ['subway', 'tram', 'bus', 'walk', 'rail','combined'] )

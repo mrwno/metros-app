@@ -69,3 +69,11 @@ route_I_counts text,
 bus_id numeric[],
 route_id numeric[]
 );
+
+create table paris_to (
+    
+route_I numeric(10,6),
+route_name text ,
+route_type numeric(10,6)
+
+);
