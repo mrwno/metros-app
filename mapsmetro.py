@@ -64,6 +64,14 @@ class MainWindow(QMainWindow):
 
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.to_box)
+        
+        _label = QLabel('Méthode: ', self)
+        _label.setFixedSize(60,60)
+        self.meth_box = QComboBox() 
+        self.meth_box.addItems( ['subway', 'tram', 'bus', 'walk', 'rail','combined'] )
+        self.meth_box.setCurrentIndex( 0 )
+        controls_panel.addWidget(_label)
+        controls_panel.addWidget(self.meth_box)
 
         _label = QLabel('Hops: ', self)
         _label.setFixedSize(20,20)
@@ -85,14 +93,6 @@ class MainWindow(QMainWindow):
         self.maptype_box.addItems(self.webView.maptypes)
         self.maptype_box.currentIndexChanged.connect(self.webView.setMap)
         controls_panel.addWidget(self.maptype_box)
-
-        _label = QLabel('Méthode: ', self)
-        _label.setFixedSize(20,20)
-        self.meth_box = QComboBox() 
-        self.meth_box.addItems( ['subway', 'tram', 'bus', 'walk', 'rail','combined'] )
-        self.meth_box.setCurrentIndex( 0 )
-        controls_panel.addWidget(_label)
-        controls_panel.addWidget(self.meth_box)
            
         self.connect_DB()
 
