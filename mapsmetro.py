@@ -44,7 +44,7 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.from_box)
 
-        predefined_value = "Front Populaire"
+        predefined_value = "Riquet"
         self.from_box.addItem(predefined_value)
 
         controls_panel.addWidget(_label)
@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.to_box)
         #Sert ??? mettre des valeurs pr???d???finies dans le To
-        predefined_value = "Gare du Nord"
+        predefined_value = "Châtelet"
         self.to_box.addItem(predefined_value)
 
         controls_panel.addWidget(_label)
@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
         _label = QLabel('M??thode: ', self)
         _label.setFixedSize(20,20)
         self.meth_box = QComboBox() 
-        self.meth_box.addItems( ['Metro', 'Tram', 'Bus', 'Walk', 'Train','Tout'] )
+        self.meth_box.addItems( ['subway', 'tram', 'bus', 'walk', 'rail','combined'] )
         self.meth_box.setCurrentIndex( 0 )
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.meth_box)
@@ -124,7 +124,7 @@ class MainWindow(QMainWindow):
 
       
             i = i + 1
-        
+
 
             
         
@@ -135,6 +135,7 @@ class MainWindow(QMainWindow):
         _fromstation = str(self.from_box.currentText())
         _tostation = str(self.to_box.currentText())
         _hops = int(self.hop_box.currentText())
+        _meth = str(self.meth_box.currentText())
 
         self.rows = []
         self.rows2 = []
@@ -144,14 +145,14 @@ class MainWindow(QMainWindow):
         self.res3=[]
         route=[]
         if _hops >= 1 : 
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
             self.conn.commit()
             self.rows += self.cursor.fetchall()
             print(self.rows)
-            self.res+=self.compare2(self.rows)
+            self.res+=self.compare(self.rows)
             
         if _hops >= 2 :
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
             self.conn.commit()
             self.rows += self.cursor.fetchall()
             self.res7=self.compare(self.rows)
@@ -163,7 +164,7 @@ class MainWindow(QMainWindow):
                 print("##############################################")
                 fromi=self.res7[e][2]
                 print("Mon from_station est",fromi)
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
                 self.conn.commit()
                 self.rows_new += self.cursor.fetchall()
                 self.rows=self.rows_new
@@ -175,21 +176,17 @@ class MainWindow(QMainWindow):
             for ligne_res7 in self.res7:
                 for ligne_res_new in self.res_new:
                     # Verifier si les criteres de fusion sont satisfaits
-                    if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]):
-                        if (ligne_res_new[0] == ligne_res_new[2]):
-                            nouvelle_ligne = ligne_res7
-                        else :
-                            # Fusionner les lignes en creant une nouvelle liste
-                            nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
+                    if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]) and (ligne_res_new[0] == ligne_res_new[2]):
+                        # Fusionner les lignes en creant une nouvelle liste
+                        nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
                         # Ajouter la nouvelle ligne au tableau combine
                         self.res_combined.append(nouvelle_ligne)
             self.res += self.res_combined
 
-        print("mon final est ", self.res_combined)
         #print("##################################################################################")
         #print("Mon res final est ",self.res_new)"""
         
-        self.res = [list(x) for x in set(tuple(x) for x in self.res_combined)]
+        self.res = [list(x) for x in set(tuple(x) for x in self.res)]
 
         if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
@@ -203,10 +200,8 @@ class MainWindow(QMainWindow):
 
         i = 0
         for row in self.res : 
-            print("Ma ligne est ",row)
             j = 0
             for colonne in row :
-                print("Ma colonne est",colonne)
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
                 j = j + 1
             i = i + 1
@@ -263,32 +258,6 @@ class MainWindow(QMainWindow):
             if self.res2.count(element)>=2:
                 self.res2.remove(element)
         return self.res2
-
-    def compare2(self,rows):
-        self.rows2 = []
-        self.rs = []
-        for i in range(len(self.rows)):
-            #print("Je vais faire", len(self.rows))
-            for element in self.rows[i][1]:
-                for elements in self.rows[i][3]:
-                    if element == elements:
-                        print("mon element 1 est", element)
-                        print("mon element 2 est", elements)
-                        for j in range(len(self.rows[-1])-1):
-                            print(j)
-                            if (j != 1):
-                                #print("je vais ajouter",self.rows[i][j])
-                                self.rs.append(self.rows[i][j])
-
-                            else:
-                                #print("je vais executer cette commande")
-                                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
-                                self.conn.commit()
-                                self.rows2 += self.cursor.fetchall()
-                                self.rs.append(self.rows2[0][0])
-
-        print("Mon res est",self.rs)
-        return self.rs
 
     def button_Clear(self):
         self.webView.clearMap(self.maptype_box.currentIndex())
