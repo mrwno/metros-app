@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import *
 
 class MainWindow(QMainWindow):
 
+
     def __init__(self):
         super().__init__()
 
@@ -97,7 +98,6 @@ class MainWindow(QMainWindow):
         self.connect_DB()
 
         self.startingpoint = True
-                   
         self.show()
         
 
@@ -105,6 +105,8 @@ class MainWindow(QMainWindow):
         self.conn = psycopg2.connect(database="l3info_61", user="l3info_61", host="10.11.11.22", password="L3INFO_61")
         self.cursor = self.conn.cursor()
 
+        self.cursor.execute("""TRUNCATE TABLE historique RESTART IDENTITY;""")
+        self.conn.commit()
         self.cursor.execute("""SELECT distinct name FROM nodes""")
         self.conn.commit()
         rows = self.cursor.fetchall()
@@ -153,12 +155,15 @@ class MainWindow(QMainWindow):
 
     def button_Go(self):
         self.tableWidget.clearContents()
-
         _fromstation = str(self.from_box.currentText())
         _tostation = str(self.to_box.currentText())
         _hops = int(self.hop_box.currentText())
         _meth = str(self.meth_box.currentText())
-
+        self.cursor.execute("INSERT INTO historique (from_station, to_station, nb_hop, moyen) VALUES (%s, %s, %s, %s) RETURNING id",(_fromstation, _tostation, _hops, _meth))
+        self.conn.commit()
+        self.cursor.execute(""f" SELECT * FROM historique """)
+        self.conn.commit()
+        print(self.cursor.fetchall())
         self.rows = []
         self.rows2 = []
         self.rows_new=[]
@@ -457,5 +462,4 @@ if __name__ == '__main__':
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
-
 

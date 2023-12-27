@@ -73,4 +73,12 @@ route_I numeric(10,6),
 route_name text ,
 route_type numeric(10,6)
 
+);
+
+create table historique (
+id SERIAL PRIMARY KEY,
+from_station text ,
+to_station text ,
+nb_hop numeric ,
+moyen text 
 )
