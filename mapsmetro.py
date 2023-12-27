@@ -121,10 +121,21 @@ class MainWindow(QMainWindow):
         self.coord = []
         for col in self.res[self.tableWidget.currentRow()] :
             print(f"{i} column value is: {col}")
-            if (i%2 == 0):
-                self.cursor.execute(""f" SELECT lat, lon FROM nodes WHERE nodes.name = $${col}$$""")
-                self.conn.commit()
-                self.coord += self.cursor.fetchall()
+            if len(self.res[self.tableWidget.currentRow()]) == 5:
+                if (i >= len(self.res[self.tableWidget.currentRow()])-2):
+                    self.cursor.execute(""f" SELECT lat, lon FROM nodes WHERE nodes.stop_I = $${col}$$""")
+                    self.conn.commit()
+                    self.coord += self.cursor.fetchall()
+            if len(self.res[self.tableWidget.currentRow()]) == 8:
+                if (i >= len(self.res[self.tableWidget.currentRow()])-3):
+                    self.cursor.execute(""f" SELECT lat, lon FROM nodes WHERE nodes.stop_I = $${col}$$""")
+                    self.conn.commit()
+                    self.coord += self.cursor.fetchall()
+            if len(self.res[self.tableWidget.currentRow()]) == 11:
+                if (i >= len(self.res[self.tableWidget.currentRow()])-4):
+                    self.cursor.execute(""f" SELECT lat, lon FROM nodes WHERE nodes.stop_I = $${col}$$""")
+                    self.conn.commit()
+                    self.coord += self.cursor.fetchall()
             i = i + 1
         print(self.coord)
         for j in self.coord:
@@ -157,16 +168,16 @@ class MainWindow(QMainWindow):
         route=[]
         if _meth == 'walk':
             if _hops >= 1 : 
-                self.cursor.execute(""f" SELECT distinct C.name, A.d_walk, D.name FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$ GROUP BY C.name, A.d_walk, D.name HAVING A.d_walk <= ALL(SELECT distinct  A.d_walk FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$)""")
+                self.cursor.execute(""f" SELECT distinct C.name, A.d_walk, D.name, A.from_stop_I, A.to_stop_I FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$ GROUP BY C.name, A.d_walk, D.name, A.from_stop_I, A.to_stop_I HAVING A.d_walk <= ALL(SELECT distinct  A.d_walk FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$)""")
                 self.conn.commit()
                 self.res += self.cursor.fetchall()
                 
             if _hops >= 2 :
-                self.cursor.execute(""f" With fromstation(from_name, to_name, dist) AS (SELECT distinct C.name, D.name, A.d_walk FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I), tostation(from_name2,to_name2, dist2) AS (SELECT distinct C.name, D.name, A.d_walk FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND D.name = $${_tostation}$$ AND A.to_stop_I = D.stop_I) SELECT E.from_name, dist, E.from_name2, dist2, E.to_name2 FROM (fromstation INNER JOIN tostation ON (fromstation.to_name = tostation.from_name2)) AS E WHERE from_name != to_name AND to_name != to_name2 GROUP BY from_name, dist, from_name2 ,dist2, to_name2 HAVING (dist + dist2) <= ALL(SELECT (dist + dist2) AS distance FROM (fromstation INNER JOIN tostation ON (fromstation.to_name = tostation.from_name2)) AS F WHERE from_name != to_name AND to_name != to_name2)""")
+                self.cursor.execute(""f" With fromstation(from_name, to_name, dist, id1, id2) AS (SELECT distinct C.name, D.name, A.d_walk, A.from_stop_I, A.to_stop_I FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I), tostation(from_name2,to_name2, dist2, id3, id4) AS (SELECT distinct C.name, D.name, A.d_walk, A.from_stop_I, A.to_stop_I FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND D.name = $${_tostation}$$ AND A.to_stop_I = D.stop_I) SELECT E.from_name, dist, E.from_name2, dist2, E.to_name2, id1, id3, id4 FROM (fromstation INNER JOIN tostation ON (fromstation.id2 = tostation.id3)) AS E WHERE from_name != to_name AND to_name != to_name2 GROUP BY from_name, dist, from_name2 ,dist2, to_name2, id1, id3, id4 HAVING (dist + dist2) <= ALL(SELECT (dist + dist2) AS distance FROM (fromstation INNER JOIN tostation ON (fromstation.to_name = tostation.from_name2)) AS F WHERE from_name != to_name AND to_name != to_name2)""")
                 self.res += self.cursor.fetchall()
                 
             if _hops >= 3 :
-                self.cursor.execute(""f" With fromstation(from_name, to_name, dist) AS (SELECT distinct C.name, D.name, A.d_walk  FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I), tostation(from_name2,to_name2, dist2) AS (SELECT distinct C.name, D.name, A.d_walk FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND D.name = $${_tostation}$$ AND A.to_stop_I = D.stop_I), midstation(from_name3,to_name3, dist3) AS (SELECT distinct C.name, D.name, A.d_walk FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND A.to_stop_I = D.stop_I) SELECT F.from_name, F.dist, F.from_name3, F.dist3, F.to_name3, F.dist2, F.to_name2 FROM ((fromstation INNER JOIN midstation ON (fromstation.to_name = midstation.from_name3)) INNER JOIN tostation ON (to_name3 = tostation.from_name2)) AS F WHERE  from_name != from_name3 AND from_name3 != to_name3 AND to_name3 != to_name2 GROUP BY from_name, dist, from_name3 ,dist3, to_name3, dist2, to_name2 HAVING (dist + dist2 + dist3) <= ALL(SELECT (dist + dist2 + dist3) AS distance FROM ((fromstation INNER JOIN midstation ON (fromstation.to_name = midstation.from_name3)) INNER JOIN tostation ON (to_name3 = tostation.from_name2)) AS G WHERE from_name != from_name3 AND from_name3 != to_name3 AND to_name3 != to_name2) """)
+                self.cursor.execute(""f" With fromstation(from_name, to_name, dist, id1, id2) AS (SELECT distinct C.name, D.name, A.d_walk, A.from_stop_I, A.to_stop_I  FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I), tostation(from_name2,to_name2, dist2, id3, id4) AS (SELECT distinct C.name, D.name, A.d_walk , A.from_stop_I, A.to_stop_I FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND D.name = $${_tostation}$$ AND A.to_stop_I = D.stop_I), midstation(from_name3,to_name3, dist3, id5, id6) AS (SELECT distinct C.name, D.name, A.d_walk, A.from_stop_I, A.to_stop_I FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND A.to_stop_I = D.stop_I) SELECT F.from_name, F.dist, F.from_name3, F.dist3, F.to_name3, F.dist2, F.to_name2 ,id1,id5,id6,id4 FROM ((fromstation INNER JOIN midstation ON (fromstation.id2 = midstation.id5)) INNER JOIN tostation ON (id6 = tostation.id3)) AS F WHERE  from_name != from_name3 AND from_name3 != to_name3 AND to_name3 != to_name2 GROUP BY from_name, dist, from_name3 ,dist3, to_name3, dist2, to_name2, id1,id5,id6,id4 HAVING (dist + dist2 + dist3) <= ALL(SELECT (dist + dist2 + dist3) AS distance FROM ((fromstation INNER JOIN midstation ON (fromstation.to_name = midstation.from_name3)) INNER JOIN tostation ON (to_name3 = tostation.from_name2)) AS G WHERE from_name != from_name3 AND from_name3 != to_name3 AND to_name3 != to_name2) """)
                 self.conn.commit()
                 self.res += self.cursor.fetchall()
 
@@ -179,7 +190,7 @@ class MainWindow(QMainWindow):
                 self.res+=self.compare(self.rows)
                 
             if _hops >= 2 :
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id,  A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 self.res7=self.compare(self.rows)
@@ -191,7 +202,7 @@ class MainWindow(QMainWindow):
                     #print("##############################################")
                     fromi=self.res7[e][2]
                     #print("Mon from_station est",fromi)
-                    self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+                    self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
                     self.conn.commit()
                     self.rows_new += self.cursor.fetchall()
                     self.rows=self.rows_new
