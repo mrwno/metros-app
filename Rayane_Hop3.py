@@ -9,7 +9,9 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 
+
 class MainWindow(QMainWindow):
+
 
     def __init__(self):
         super().__init__()
@@ -36,7 +38,7 @@ class MainWindow(QMainWindow):
         main.layout().addWidget(mysplit)
 
         _label = QLabel('From: ', self)
-        _label.setFixedSize(30,30)
+        _label.setFixedSize(15,15)
         self.from_box = QComboBox() 
         self.from_box.setEditable(True)
         self.from_box.completer().setCompletionMode(QCompleter.PopupCompletion)
@@ -51,7 +53,7 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(self.from_box)
         #Sert ??? mettre des valeurs pr???d???finies dans le From
         _label = QLabel('  To: ', self)
-        _label.setFixedSize(20,20)
+        _label.setFixedSize(15,15)
         self.to_box = QComboBox() 
         self.to_box.setEditable(True)
         self.to_box.completer().setCompletionMode(QCompleter.PopupCompletion)
@@ -59,24 +61,24 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.to_box)
         #Sert ??? mettre des valeurs pr???d???finies dans le To
-        predefined_value = "Basilique de Saint-Denis"
+        predefined_value = "Châ?telet"
         self.to_box.addItem(predefined_value)
 
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.to_box)
-
+        
         _label = QLabel('Methode: ', self)
         _label.setFixedSize(60,60)
         self.meth_box = QComboBox() 
-        self.meth_box.addItems( ['Metro', 'Tram', 'Bus', 'Walk', 'Train','Tout'] )
+        self.meth_box.addItems( ['subway', 'tram', 'bus', 'walk', 'rail','combined'] )
         self.meth_box.setCurrentIndex( 0 )
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.meth_box)
-        
+
         _label = QLabel('Hops: ', self)
-        _label.setFixedSize(30,30)
+        _label.setFixedSize(20,20)
         self.hop_box = QComboBox() 
-        self.hop_box.addItems( ['1', '2', '3', '4', '5'] )
+        self.hop_box.addItems( ['1', '2', '3'] )
         self.hop_box.setCurrentIndex( 0 )
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.hop_box)
@@ -93,12 +95,10 @@ class MainWindow(QMainWindow):
         self.maptype_box.addItems(self.webView.maptypes)
         self.maptype_box.currentIndexChanged.connect(self.webView.setMap)
         controls_panel.addWidget(self.maptype_box)
-
            
         self.connect_DB()
 
         self.startingpoint = True
-                   
         self.show()
         
 
@@ -106,6 +106,8 @@ class MainWindow(QMainWindow):
         self.conn = psycopg2.connect(database="l3info_61", user="l3info_61", host="10.11.11.22", password="L3INFO_61")
         self.cursor = self.conn.cursor()
 
+        self.cursor.execute("""TRUNCATE TABLE historique RESTART IDENTITY;""")
+        self.conn.commit()
         self.cursor.execute("""SELECT distinct name FROM nodes""")
         self.conn.commit()
         rows = self.cursor.fetchall()
@@ -118,83 +120,140 @@ class MainWindow(QMainWindow):
     def table_Click(self):
         print("Row number double-clicked: ", self.tableWidget.currentRow())
         i = 0
-        for col in self.rows[self.tableWidget.currentRow()] :
+        j = 0
+        self.coord = []
+        for col in self.res[self.tableWidget.currentRow()] :
             print(f"{i} column value is: {col}")
-            if type(col)=='decimal.Decimal':
-                print(hello)
-
-      
+            if len(self.res[self.tableWidget.currentRow()]) == 5:
+                if (i >= len(self.res[self.tableWidget.currentRow()])-2):
+                    self.cursor.execute(""f" SELECT lat, lon FROM nodes WHERE nodes.stop_I = $${col}$$""")
+                    self.conn.commit()
+                    self.coord += self.cursor.fetchall()
+            if len(self.res[self.tableWidget.currentRow()]) == 8:
+                if (i >= len(self.res[self.tableWidget.currentRow()])-3):
+                    self.cursor.execute(""f" SELECT lat, lon FROM nodes WHERE nodes.stop_I = $${col}$$""")
+                    self.conn.commit()
+                    self.coord += self.cursor.fetchall()
+            if len(self.res[self.tableWidget.currentRow()]) == 11:
+                if (i >= len(self.res[self.tableWidget.currentRow()])-4):
+                    self.cursor.execute(""f" SELECT lat, lon FROM nodes WHERE nodes.stop_I = $${col}$$""")
+                    self.conn.commit()
+                    self.coord += self.cursor.fetchall()
             i = i + 1
-        
+        print(self.coord)
+        for j in self.coord:
+            self.webView.addMarker(j[0], j[1])
+            if j != self.coord[0]:
+                self.webView.addSegment(lat, lon, j[0], j[1])
+                lat = j[0]
+                lon = j[1]
+            else:
+                lat = j[0]
+                lon = j[1]
+                self.webView.addSegment(lat, lon, self.coord[1][0], self.coord[1][1])
 
-            
         
 
     def button_Go(self):
         self.tableWidget.clearContents()
-
         _fromstation = str(self.from_box.currentText())
         _tostation = str(self.to_box.currentText())
         _hops = int(self.hop_box.currentText())
-        self.valeur=str(self.meth_box.currentText()) #sert ??? prendre le type de transport 
-
+        _meth = str(self.meth_box.currentText())
+        self.cursor.execute("INSERT INTO historique (from_station, to_station, nb_hop, moyen) VALUES (%s, %s, %s, %s) RETURNING id",(_fromstation, _tostation, _hops, _meth))
+        self.conn.commit()
         self.rows = []
         self.rows2 = []
         self.rows_new=[]
-        self.rows_new2=[]
         self.res = []
         self.res2=[]
         self.res3=[]
-        self.res_combined = []
+        self.res4=[]
         route=[]
-        if _hops >= 8 : 
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
-            self.conn.commit()
-            self.rows += self.cursor.fetchall()
-            print(self.rows)
-            self.res+=self.compare2(self.rows)
-            
-        if _hops >= 8 : #ATTENTION A REMPLACER 
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
-            self.conn.commit()
-            self.rows += self.cursor.fetchall()
-            self.res7=self.compare(self.rows)
-            for elementsss in self.res7:
-                if self.res7.count(elementsss)>=2:
-                    self.res7.remove(elementsss)
-            print("Mon rows est",self.res7)
-            for e in range(len(self.res7)):
-                print("##############################################")
-                fromi=self.res7[e][2]
-                print("Mon from_station est",fromi)
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+        if _meth == 'walk':
+            if _hops >= 1 : 
+                self.cursor.execute(""f" SELECT distinct C.name, A.d_walk, D.name, A.from_stop_I, A.to_stop_I FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$ GROUP BY C.name, A.d_walk, D.name, A.from_stop_I, A.to_stop_I HAVING A.d_walk <= ALL(SELECT distinct  A.d_walk FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$)""")
                 self.conn.commit()
-                self.rows_new += self.cursor.fetchall()
-                self.rows=self.rows_new
+                self.res += self.cursor.fetchall()
+                
+            if _hops >= 2 :
+                self.cursor.execute(""f" With fromstation(from_name, to_name, dist, id1, id2) AS (SELECT distinct C.name, D.name, A.d_walk, A.from_stop_I, A.to_stop_I FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I), tostation(from_name2,to_name2, dist2, id3, id4) AS (SELECT distinct C.name, D.name, A.d_walk, A.from_stop_I, A.to_stop_I FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND D.name = $${_tostation}$$ AND A.to_stop_I = D.stop_I) SELECT E.from_name, dist, E.from_name2, dist2, E.to_name2, id1, id3, id4 FROM (fromstation INNER JOIN tostation ON (fromstation.id2 = tostation.id3)) AS E WHERE from_name != to_name AND to_name != to_name2 GROUP BY from_name, dist, from_name2 ,dist2, to_name2, id1, id3, id4 HAVING (dist + dist2) <= ALL(SELECT (dist + dist2) AS distance FROM (fromstation INNER JOIN tostation ON (fromstation.to_name = tostation.from_name2)) AS F WHERE from_name != to_name AND to_name != to_name2)""")
+                self.res += self.cursor.fetchall()
+                
+            if _hops >= 3 :
+                self.cursor.execute(""f" With fromstation(from_name, to_name, dist, id1, id2) AS (SELECT distinct C.name, D.name, A.d_walk, A.from_stop_I, A.to_stop_I  FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I), tostation(from_name2,to_name2, dist2, id3, id4) AS (SELECT distinct C.name, D.name, A.d_walk , A.from_stop_I, A.to_stop_I FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND D.name = $${_tostation}$$ AND A.to_stop_I = D.stop_I), midstation(from_name3,to_name3, dist3, id5, id6) AS (SELECT distinct C.name, D.name, A.d_walk, A.from_stop_I, A.to_stop_I FROM {_meth} as A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND A.to_stop_I = D.stop_I) SELECT F.from_name, F.dist, F.from_name3, F.dist3, F.to_name3, F.dist2, F.to_name2 ,id1,id5,id6,id4 FROM ((fromstation INNER JOIN midstation ON (fromstation.id2 = midstation.id5)) INNER JOIN tostation ON (id6 = tostation.id3)) AS F WHERE  from_name != from_name3 AND from_name3 != to_name3 AND to_name3 != to_name2 GROUP BY from_name, dist, from_name3 ,dist3, to_name3, dist2, to_name2, id1,id5,id6,id4 HAVING (dist + dist2 + dist3) <= ALL(SELECT (dist + dist2 + dist3) AS distance FROM ((fromstation INNER JOIN midstation ON (fromstation.to_name = midstation.from_name3)) INNER JOIN tostation ON (to_name3 = tostation.from_name2)) AS G WHERE from_name != from_name3 AND from_name3 != to_name3 AND to_name3 != to_name2) """)
+                self.conn.commit()
+                self.res += self.cursor.fetchall()
 
-                self.res_new=self.compare(self.rows)
-
-                print("Mon res3  est donc ",self.res_new)
+        if _meth != "walk":    
+            if _hops >= 1 : 
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                #print(self.rows)
+                self.res+=self.compare(self.rows)
+                
+            if _hops >= 2 :
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id,  A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.conn.commit()
+                self.rows += self.cursor.fetchall()
+                self.res7=self.compare(self.rows)
+                for elementsss in self.res7:
+                    if self.res7.count(elementsss)>=2:
+                        self.res7.remove(elementsss)
+                #print("Mon rows est",self.res7)
+                for e in range(len(self.res7)):
+                    #print("##############################################")
+                    fromi=self.res7[e][2]
+                    #print("Mon from_station est",fromi)
+                    self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+                    self.conn.commit()
+                    self.rows_new += self.cursor.fetchall()
+                    self.rows=self.rows_new
     
-            self.res_combined = []
-            for ligne_res7 in self.res7:
-                for ligne_res_new in self.res_new:
-                    # Verifier si les criteres de fusion sont satisfaits
-                    if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]) and (ligne_res_new[0] != ligne_res_new[2]):
-                        # Fusionner les lignes en creant une nouvelle liste
-                        nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
-                        # Ajouter la nouvelle ligne au tableau combine
-                        self.res_combined.append(nouvelle_ligne)
-            self.res += self.res_combined
+                    self.res_new=self.compare(self.rows)
+    
+                    #print("Mon res3  est donc ",self.res_new)
+                self.res_combined = []
+                for ligne_res7 in self.res7:
+                    for ligne_res_new in self.res_new:
+                        # Verifier si les criteres de fusion sont satisfaits
+                        if (ligne_res7[2] == ligne_res_new[0]) and (ligne_res7[1] != ligne_res_new[1]) and (ligne_res_new[0] != ligne_res_new[2]):
+                            # Fusionner les lignes en creant une nouvelle liste
+                            nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
+                            # Ajouter la nouvelle ligne au tableau combine
+                            self.res_combined.append(nouvelle_ligne)
+                self.res += self.res_combined
+                
+                indice=0
+                liste=[]
+                liste_distance=[]
+                max_value=0
+                for element in self.res:
+                    self.ligne=element
+                    distance=self.distance(self.ligne)
+                    if indice == 0 and len(element) >=4: # on rentrera donc 3 fois
+                        liste_distance.append(distance)
+                        liste.append(element)
+                        indice = indice +1
+                    if indice > 0 and len(element) >=4:
+                        max_value = liste_distance.index(max(liste_distance))
+                        if distance < liste_distance[max_value]:
+                            liste_distance[max_value]=distance
+                            liste[max_value]=element
         
-        
-        if _hops == 3  : #ATTENTION  ++++++++++++++++++++
+                
+                for element in self.res:
+                    if len(element) >= 4:
+                        self.res.remove(element)
+                print("ma liste est",liste)
+                self.res+=liste
+            if _hops == 3  : #ATTENTION  ++++++++++++++++++++
             #je vais d abord m occuper du cote gauche
-            if self.valeur=='Metro':
-                print("Ma valeur est",self.valeur)
+               #print("Ma valeur est",self.valeur)
                 self.rows=[]
                 self.res_combined=[]
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth}  AS A,{_meth}  AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 self.res7=self.compare(self.rows)
@@ -205,7 +264,7 @@ class MainWindow(QMainWindow):
                 
                 self.rows=[]
                 #maintenant, je m occupe du cote droit
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 self.res8=self.compare(self.rows)
@@ -224,7 +283,7 @@ class MainWindow(QMainWindow):
                     _from=element[2]
                     for element2 in self.res8:
                         _to=element2[0]
-                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM subway as A, subway AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
+                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
                         self.conn.commit()
                         self.rows= self.cursor.fetchall()
                         self.res9=self.compare(self.rows)
@@ -234,214 +293,41 @@ class MainWindow(QMainWindow):
                             self.res_combined.append(nouveau)
                             print("#######Ma combinaison est",nouveau)
                             #print("<<<<<<<Sa distance est :",self.distance(nouveau))
-            
-                self.res=self.res_combined
-                 
-                
-                
-
-########################################################################################################"            
-            if self.valeur=='Bus':
-                print("Ma valeur est",self.valeur)
-                self.rows=[]
-                self.res_combined=[]
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM bus as A, bus AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
-                self.conn.commit()
-                self.rows += self.cursor.fetchall()
-                self.res7=self.compare(self.rows)
-                for elementsss in self.res7:
-                    if self.res7.count(elementsss)>=2:
-                        self.res7.remove(elementsss)
-                print("Mon cote gauche est ",self.res7)
-                
-                self.rows=[]
-                #maintenant, je m occupe du cote droit
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM bus as A, bus AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
-                self.conn.commit()
-                self.rows += self.cursor.fetchall()
-                self.res8=self.compare(self.rows)
-                for elementsss in self.res8:
-                    if self.res8.count(elementsss)>=2:
-                        self.res8.remove(elementsss)
-                print("\n###########Mon cote droit est",self.res8)
-                #je vais un lien entre les deux parties
-                self.rows=[]
-                for element in self.res7:
-                    _from=element[2]
-                    for element2 in self.res8:
-                        _to=element2[0]
-                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM bus as A, bus AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
-                        self.conn.commit()
-                        self.rows= self.cursor.fetchall()
-                        self.res9=self.compare(self.rows)
-                        if len(self.res9) !=0:
-                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
-                            print("#######Ma combinaison est",nouveau)
-                            self.res_combined.append(nouveau)
-                self.res=self.res_combined
-#############################################################################################################
-            if self.valeur=='Tram':
-                print("Ma valeur est",self.valeur)
-                self.rows=[]
-                self.res_combined=[]
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM tram AS A, tram AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
-                self.conn.commit()
-                self.rows += self.cursor.fetchall()
-                self.res7=self.compare(self.rows)
-                for elementsss in self.res7:
-                    if self.res7.count(elementsss)>=2:
-                        self.res7.remove(elementsss)
-                print("Mon cote gauche est ",self.res7)
-                
-                self.rows=[]
-                #maintenant, je m occupe du cote droit
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM tram as A, tram AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
-                self.conn.commit()
-                self.rows += self.cursor.fetchall()
-                self.res8=self.compare(self.rows)
-                for elementsss in self.res8:
-                    if self.res8.count(elementsss)>=2:
-                        self.res8.remove(elementsss)
-                print("\n###########Mon cote droit est",self.res8)
-                #je vais un lien entre les deux parties
-                self.rows=[]
-                for element in self.res7:
-                    _from=element[2]
-                    for element2 in self.res8:
-                        _to=element2[0]
-                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM tram as A, tram AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
-                        self.conn.commit()
-                        self.rows= self.cursor.fetchall()
-                        self.res9=self.compare(self.rows)
-                        if len(self.res9) !=0:
-                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
-                            print("#######Ma combinaison est",nouveau)
-                            self.ligne=nouveau
-                            self.res_combined.append(nouveau)
-                self.res=self.res_combined
-
-                        
-#############################################################################################################
-            if self.valeur=='Train': #ATTENTION IL FAUT REFAIRE LA TABLE WALK, ELLE A DES ELEMENTS DIFFERENTS QUE LES 3 AUTRES
-                print("Ma valeur est",self.valeur)
-                self.rows=[]
-                self.res_combined=[]
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM rail as A, rail AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
-                self.conn.commit()
-                self.rows += self.cursor.fetchall()
-                self.res7=self.compare(self.rows)
-                for elementsss in self.res7:
-                    if self.res7.count(elementsss)>=2:
-                        self.res7.remove(elementsss)
-                print("Mon cote gauche est ",self.res7)
-                
-                self.rows=[]
-                #maintenant, je m occupe du cote droit
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM rail as A, rail AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
-                self.conn.commit()
-                self.rows += self.cursor.fetchall()
-                self.res8=self.compare(self.rows)
-                for elementsss in self.res8:
-                    if self.res8.count(elementsss)>=2:
-                        self.res8.remove(elementsss)
-                print("\n###########Mon cote droit est",self.res8)
-                #je vais un lien entre les deux parties
-                self.rows=[]
-                for element in self.res7:
-                    _from=element[2]
-                    for element2 in self.res8:
-                        _to=element2[0]
-                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM rail as A, rail AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
-                        self.conn.commit()
-                        self.rows= self.cursor.fetchall()
-                        self.res9=self.compare(self.rows)
-                        if len(self.res9) !=0:
-                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
-                            print("#######Ma combinaison est",nouveau)
-                            self.res_combined.append(nouveau)
-                self.res=self.res_combined
-#############################################################################################################
-
-            if self.valeur=='Walk': #ATTENTION IL FAUT REFAIRE LA TABLE WALK, ELLE A DES ELEMENTS DIFFERENTS QUE LES 3 AUTRES
-                print("Ma valeur est",self.valeur)
-                self.rows=[]
-                self.res_combined=[]
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM walk as A, walk AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
-                self.conn.commit()
-                self.rows += self.cursor.fetchall()
-                self.res7=self.compare(self.rows)
-                for elementsss in self.res7:
-                    if self.res7.count(elementsss)>=2:
-                        self.res7.remove(elementsss)
-                print("Mon cote gauche est ",self.res7)
-                
-                self.rows=[]
-                #maintenant, je m occupe du cote droit
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM walk as A, walk AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
-                self.conn.commit()
-                self.rows += self.cursor.fetchall()
-                self.res8=self.compare(self.rows)
-                for elementsss in self.res8:
-                    if self.res8.count(elementsss)>=2:
-                        self.res8.remove(elementsss)
-                print("\n###########Mon cote droit est",self.res8)
-                #je vais un lien entre les deux parties
-                self.rows=[]
-                for element in self.res7:
-                    _from=element[2]
-                    for element2 in self.res8:
-                        _to=element2[0]
-                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM walk as A, walk AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
-                        self.conn.commit()
-                        self.rows= self.cursor.fetchall()
-                        self.res9=self.compare(self.rows)
-                        if len(self.res9) !=0:
-                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
-                            print("#######Ma combinaison est",nouveau)
-                            self.res_combined.append(nouveau)
-                self.res=self.res_combined
-#############################################################################################################
-
-            else:
-                print("je n'ai rien")
-        #print("##################################################################################")
-        #print("Mon res final est ",self.res_new)"""
+                for element in self.res_combined:
+                    #print("element 1 est egale a ",element[1])
+                    #print("element 2 est egale a ",element[3])
+                    if element[1] != element [3] and element[3] != element[5] and element[0]!=element[2] and element[2]!=element[4] and element[4]!=element[6] and element[2]!=element[6]:
+                        #print("je rentre")
+                        (self.res4).append(element)
+                indice=0
+                liste=[]
+                liste_distance=[]
+                max_value=0
+                for element in self.res4:
+                    self.ligne=element
+                    distance=self.distance(self.ligne)
+                    if indice == 0: # on rentrera donc 3 fois
+                        liste_distance.append(distance)
+                        liste.append(element)
+                        indice = indice +1
+                    else:
+                        max_value = liste_distance.index(max(liste_distance))
+                        if distance < liste_distance[max_value]:
+                            liste_distance[max_value]=distance
+                            liste[max_value]=element
+                print(self.res4)
+                print("###########################")          
+                print(liste)
+                for element in self.res:
+                    if len(element) == 5:
+                        self.res.remove(element)
+                self.res+=liste
+                print(self.res)
+    
+            #print("##################################################################################")
+            #print("Mon res final est ",self.res_new)"""
         
-        #sert ??? s???parer les doublons
-        self.res = [list(x) for x in set(tuple(x) for x in self.res_combined)]
-
-        #On ne tient en compte que si il y'a 3 station diffé?rente
-        self.res2=self.res
-        self.res=[]
-        for element in self.res2:
-            #print("element 1 est egale a ",element[1])
-            #print("element 2 est egale a ",element[3])
-            if element[1] != element [3] and element[3] != element[5] and element[0]!=element[2] and element[2]!=element[4] and element[4]!=element[6] and element[2]!=element[6]:
-                #print("je rentre")
-                (self.res).append(element)
-
-        
-        print("mon final est ", self.res)
-        
-        indice=0
-        liste=[]
-        liste_distance=[]
-        max_value=0
-        for element in self.res:
-            self.ligne=element
-            distance=self.distance(self.ligne)
-            if indice == 0: # on rentrera donc 3 fois
-                liste_distance.append(distance)
-                liste.append(element)
-                indice = indice +1
-            else:
-                max_value = liste_distance.index(max(liste_distance))
-                if distance < liste_distance[max_value]:
-                    liste_distance[max_value]=distance
-                    liste[max_value]=element
-                    
-        
-        self.res=liste
+        self.res = [list(x) for x in set(tuple(x) for x in self.res)]
 
         if len(self.res) == 0 : 
             self.tableWidget.setRowCount(0)
@@ -455,10 +341,8 @@ class MainWindow(QMainWindow):
 
         i = 0
         for row in self.res : 
-            #print("Ma ligne est ",row)
             j = 0
             for colonne in row :
-                #print("Ma colonne est",colonne)
                 self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
                 j = j + 1
             i = i + 1
@@ -499,8 +383,7 @@ class MainWindow(QMainWindow):
                                 self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
                                 self.conn.commit()
                                 self.rows2 = self.cursor.fetchall()
-                                if len(self.rows2) > 0:
-                                    tuple=tuple+(self.rows2[0][0],)
+                                tuple=tuple+(self.rows2[0][0],)
             if(len(tuple)>3 ):
                 self.rs.append((tuple[0],tuple[1],tuple[2]))
                 
@@ -517,47 +400,22 @@ class MainWindow(QMainWindow):
                 self.res2.remove(element)
         return self.res2
 
-    def compare2(self,rows):
-        self.rows2 = []
-        self.rs = []
-        for i in range(len(self.rows)):
-            #print("Je vais faire", len(self.rows))
-            for element in self.rows[i][1]:
-                for elements in self.rows[i][3]:
-                    if element == elements:
-                        #print("mon element 1 est", element)
-                        #print("mon element 2 est", elements)
-                        for j in range(len(self.rows[-1])-1):
-                            #print(j)
-                            if (j != 1):
-                                #print("je vais ajouter",self.rows[i][j])
-                                self.rs.append(self.rows[i][j])
-
-                            else:
-                                #print("je vais executer cette commande")
-                                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
-                                self.conn.commit()
-                                self.rows2 += self.cursor.fetchall()
-                                self.rs.append(self.rows2[0][0])
-
-        #print("Mon res est",self.rs)
-        return self.rs
-
-    
     def distance (self,ligne): #ATTENTION IL FAUT REMPLACER LES VALEURS DES BASE DONNEES A CHAQUE FOIS 
+        _meth=str(self.meth_box.currentText())
         distance=0
         self.rows=[]
         print("Nous somme entrain de travailler sur la combinaise suivante : ",self.ligne)
         _from=self.ligne[0]
         _to=self.ligne[2]
         _transp=self.ligne[1]
-        print (" ### mon _transp est ",_transp)
-        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, A.d FROM subway as A, subway AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  ORDER BY A.d ASC   """)
+       # print (" ### mon _transp est ",_transp)
+        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM combined as A, combined  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
         self.conn.commit()
         self.rows = self.cursor.fetchall()
         
         self.rows2=[]
         self.rows2=self.rows
+        self.rows3=self.rows
         self.rows=[]
         #print("mon row est",self.rows2)
         for i in range(len(self.rows2)):
@@ -570,70 +428,75 @@ class MainWindow(QMainWindow):
                 if(_transp in test2[0]):
                     self.rows.append(self.rows2[i])
         
-        print("mon self.rows est",self.rows)
+       # print("mon self.rows est",self.rows)
         #print("Ma requete sql va afficher la chose suivante",self.ligne)
         if len(self.rows) > 0:
-            distance= distance + self.rows[0][3]
+            distance2=self.mouseClick(self.rows[0][3],self.rows[0][4])
+            print("Ma distance est",distance2)
+            distance= distance + self.mouseClick(self.rows[0][3],self.rows[0][4])
         print("La distance numero 1 est",distance)
        
-        self.rows=[]
-        _from=self.ligne[2]
-        _to=self.ligne[4]
-        _transp=self.ligne[3]
-        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, A.d FROM subway as A, subway AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  ORDER BY A.d ASC   """)
-        self.conn.commit()
-        self.rows = self.cursor.fetchall()
-        #print("Ma requete sql va afficher la chose suivante",self.rows)
-        
-        self.rows2=[]
-        self.rows2=self.rows
-        self.rows=[]
-        #print("mon row est",self.rows2)
-        for i in range(len(self.rows2)):
-            test=self.rows2[i][1] # on prend le bus_id
-            for element in test:
-                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
-                self.conn.commit()
-                test2 = self.cursor.fetchall()
-                #print("Ma station est",test2[0])
-                if(_transp in test2[0]):
-                    self.rows.append(self.rows2[i])
-        
-        if len(self.rows) > 0:
-            distance= distance + self.rows[0][3]
-        print("La distance numero 2 est",distance)
+        if len(self.ligne) >= 5:
+            self.rows=[]
+            _from=self.ligne[2]
+            _to=self.ligne[4]
+            _transp=self.ligne[3]
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM combined as A, combined  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+            self.conn.commit()
+            self.rows = self.cursor.fetchall()
+            print("Ma requete sql va afficher la chose suivante",self.rows)
+            
+            self.rows2=[]
+            self.rows2=self.rows
+            self.rows=[]
+            #print("mon row est",self.rows2)
+            for i in range(len(self.rows2)):
+                test=self.rows2[i][1] # on prend le bus_id
+                for element in test:
+                    self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
+                    self.conn.commit()
+                    test2 = self.cursor.fetchall()
+                    #print("Ma station est",test2[0])
+                    if(_transp in test2[0]):
+                        self.rows.append(self.rows2[i])
+            
+            if len(self.rows) > 0:
+                distance= distance + self.mouseClick(self.rows[0][3],self.rows[0][4])
+            print("La distance numero 2 est",distance)
        
-        self.rows=[]
-        _from=self.ligne[4]
-        _to=self.ligne[6]
-        _transp=self.ligne[5]
-        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, A.d FROM subway as A, subway AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  ORDER BY A.d ASC   """)
-        self.conn.commit()
-        self.rows = self.cursor.fetchall()
-        #print("Ma requete sql va afficher la chose suivante",self.rows)
+        if len(self.rows) >= 7:
+            self.rows=[]
+            _from=self.ligne[4]
+            _to=self.ligne[6]
+            _transp=self.ligne[5]
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM combined as A, combined  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+            self.conn.commit()
+            self.rows = self.cursor.fetchall()
+            #print("Ma requete sql va afficher la chose suivante",self.rows)
 
-        self.rows2=[]
-        self.rows2=self.rows
-        self.rows=[]
-        #print("mon row est",self.rows2)
-        for i in range(len(self.rows2)):
-            test=self.rows2[i][1] # on prend le bus_id
-            for element in test:
-                self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
-                self.conn.commit()
-                test2 = self.cursor.fetchall()
-                #print("Ma station est",test2[0])
-                if(_transp in test2[0]):
-                    self.rows.append(self.rows2[i])      
+            self.rows2=[]
+            self.rows2=self.rows
+            self.rows=[]
+            #print("mon row est",self.rows2)
+            for i in range(len(self.rows2)):
+                test=self.rows2[i][1] # on prend le bus_id
+                for element in test:
+                    self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
+                    self.conn.commit()
+                    test2 = self.cursor.fetchall()
+                    #print("Ma station est",test2[0])
+                    if(_transp in test2[0]):
+                        self.rows.append(self.rows2[i])      
 
-        if len(self.rows) > 0:
-            distance= distance + self.rows[0][3]
-            #print("La distance numero 3 est",distance)
-    
+            if len(self.rows) > 0:
+                distance= distance + self.mouseClick(self.rows[0][3],self.rows[0][4])
+                print("La distance numero 3 est",distance)
+        
         print("La distance finale est donc : ",distance)
-        
+            
         return distance
-        
+      
+
     def button_Clear(self):
         self.webView.clearMap(self.maptype_box.currentIndex())
         self.startingpoint = True
@@ -644,15 +507,17 @@ class MainWindow(QMainWindow):
         self.webView.addPoint(lat, lng)
 
         print(f"Clicked on: latitude {lat}, longitude {lng}")
-        self.cursor.execute(""f" WITH mytable (distance, name2) AS (SELECT ( ABS((lat-{lat})*(lat-{lat})) + ABS((lon-{lng})*(lon-{lng})) ), name FROM nodes) SELECT name2 FROM mytable  WHERE distance <=  (SELECT min(B.distance) FROM mytable as B)  """)
+        self.cursor.execute(""f" WITH mytable (distance, name2) AS (SELECT ( ABS((lat-{lat})*(lat-{lat})) + ABS((lon-{lng})*(lon-{lng})) ), name FROM nodes) SELECT distance,name2 FROM mytable  WHERE distance <=  (SELECT min(B.distance) FROM mytable as B)  """)
         self.conn.commit()
         rows = self.cursor.fetchall()
         #print('Closest STATION is: ', rows[0][0])
         if self.startingpoint :
-            self.from_box.setCurrentIndex(self.from_box.findText(rows[0][0], Qt.MatchFixedString))
-        else :
-            self.to_box.setCurrentIndex(self.to_box.findText(rows[0][0], Qt.MatchFixedString))
+            #self.from_box.setCurrentIndex(self.from_box.findText(rows[0][0], Qt.MatchFixedString))
+        #else :
+            self.to_box.setCurrentIndex(self.to_box.findText(rows[0][1], Qt.MatchFixedString))
         self.startingpoint = not self.startingpoint
+        return rows[0][0]
+        
 
 
 
