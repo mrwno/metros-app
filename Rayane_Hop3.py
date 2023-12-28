@@ -512,8 +512,8 @@ class MainWindow(QMainWindow):
         rows = self.cursor.fetchall()
         #print('Closest STATION is: ', rows[0][0])
         if self.startingpoint :
-            #self.from_box.setCurrentIndex(self.from_box.findText(rows[0][0], Qt.MatchFixedString))
-        #else :
+            self.from_box.setCurrentIndex(self.from_box.findText(rows[0][0], Qt.MatchFixedString))
+        else :
             self.to_box.setCurrentIndex(self.to_box.findText(rows[0][1], Qt.MatchFixedString))
         self.startingpoint = not self.startingpoint
         return rows[0][0]
