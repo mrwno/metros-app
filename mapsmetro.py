@@ -389,6 +389,7 @@ class MainWindow(QMainWindow):
             j = j+1
         
         self.update()
+	print("Recherche d'itinéraire finie")
 
 
    
