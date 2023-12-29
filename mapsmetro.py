@@ -198,6 +198,7 @@ class MainWindow(QMainWindow):
         self.res2=[]
         self.res3=[]
         self.res4=[]
+
         route=[]
         if _meth == 'walk':
             if _hops >= 1 : 
@@ -230,12 +231,11 @@ class MainWindow(QMainWindow):
                 for elementsss in self.res7:
                     if self.res7.count(elementsss)>=2:
                         self.res7.remove(elementsss)
-                #print("Mon rows est",self.res7)
                 for e in range(len(self.res7)):
                     #print("##############################################")
                     fromi=self.res7[e][2]
                     #print("Mon from_station est",fromi)
-                    self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+                    self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
                     self.conn.commit()
                     self.rows_new += self.cursor.fetchall()
                     self.rows=self.rows_new
@@ -252,11 +252,20 @@ class MainWindow(QMainWindow):
                             nouvelle_ligne = ligne_res7 + ligne_res_new[1:]
                             # on ajoute la nouvelle ligne au tableau combine
                             self.res_combined.append(nouvelle_ligne)
+               #permet de réarranger l'ordre 
+                self.res_combined2=[]
+                ordre_indice =[0,1,2,5,6,3,4,8]
+                for row in self.res_combined:
+                    res_row =[row[i] for i in ordre_indice]
+                    self.res_combined2.append(res_row) 
+                
+               # print(self.res_combined2)
+
                 indice=0
                 liste=[]
                 liste_distance=[]
                 max_value=0
-                for element in self.res_combined:
+                for element in self.res_combined2:
                     self.ligne=element
                     distance=self.distance(self.ligne)
                     if indice == 0 and len(element) >=4: # on rentrera donc 3 fois
@@ -271,30 +280,30 @@ class MainWindow(QMainWindow):
         
                 self.res+=liste
 
-            if _hops == 3  : #ATTENTION  ++++++++++++++++++++
+            if _hops >= 3  : #ATTENTION  ++++++++++++++++++++
             #je vais d abord m occuper du cote gauche
                #print("Ma valeur est",self.valeur)
                 self.rows=[]
                 self.res_combined=[]
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth}  AS A,{_meth}  AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id , A.from_stop_i, B.to_stop_I FROM {_meth}  AS A,{_meth}  AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 self.res7=self.compare(self.rows)
                 for elementsss in self.res7:
                     if self.res7.count(elementsss)>=2:
                         self.res7.remove(elementsss)
-               #print("Mon cote gauche est ",self.res7)
+                #print("Mon cote gauche est ",self.res7)
                 
                 self.rows=[]
                 #maintenant, je m occupe du cote droit
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
+                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id , A.from_stop_i, B.to_stop_I FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 self.res8=self.compare(self.rows)
                 for elementsss in self.res8:
                     if self.res8.count(elementsss)>=2:
                         self.res8.remove(elementsss)
-               #print("\n###########Mon cote droit est",self.res8)
+                #print("\n###########Mon cote droit est",self.res8)
                 #je fais un lien entre les deux parties
                 self.rows=[]
                 indice=0
@@ -306,16 +315,17 @@ class MainWindow(QMainWindow):
                     _from=element[2]
                     for element2 in self.res8:
                         _to=element2[0]
-                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
+                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, A.from_stop_i, B.to_stop_I FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
                         self.conn.commit()
                         self.rows= self.cursor.fetchall()
                         self.res9=self.compare(self.rows)
                         if len(self.res9) !=0:
-                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+element2
+                            nouveau=(element[0],element[1])+(self.res9[0][0],self.res9[0][1])+(element2[0],element2[1],element2[2])+(element[3],element[4])+(element2[3],element2[4])
                             self.ligne=nouveau
                             self.res_combined.append(nouveau)
                             #print("#######Ma combinaison est",nouveau)
                             #print("<<<<<<<Sa distance est :",self.distance(nouveau))
+                #print(self.res_combined)
                 for element in self.res_combined:
                     #print("element 1 est egale a ",element[1])
                     #print("element 2 est egale a ",element[3])
@@ -360,7 +370,15 @@ class MainWindow(QMainWindow):
         for row in self.res : 
             j = 0
             for colonne in row :
-                self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
+                if len(row) == 5:
+                    if j <= 3: 
+                        self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
+                if len(row) == 8:
+                    if j <= 5: 
+                        self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
+                if len(row) == 11:
+                    if j <= 7: 
+                        self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
                 j = j + 1
             i = i + 1
 
@@ -388,7 +406,7 @@ class MainWindow(QMainWindow):
                     if element == elements:
                         #print("mon element 1 est", element)
                         #print("mon element 2 est", elements)
-                        for j in range(len(self.rows[-1])-1):
+                        for j in range(len(self.rows[-1])):
                             #print(j)
                             if (j != 1):
                                 #print("je vais ajouter",self.rows[i][j])
@@ -401,8 +419,8 @@ class MainWindow(QMainWindow):
                                 self.conn.commit()
                                 self.rows2 = self.cursor.fetchall()
                                 tuple=tuple+(self.rows2[0][0],)
-            if(len(tuple)>3 ):
-                self.rs.append((tuple[0],tuple[1],tuple[2]))
+            if(len(tuple)>5 ):
+                self.rs.append((tuple[0],tuple[1],tuple[2],tuple[4],tuple[5]))
                 
             else:
                 self.rs.append(tuple)
@@ -421,12 +439,12 @@ class MainWindow(QMainWindow):
         _meth=str(self.meth_box.currentText())
         distance=0
         self.rows=[]
-        print("Nous somme entrain de travailler sur la combinaise suivante : ",self.ligne)
+       # print("Nous somme entrain de travailler sur la combinaise suivante : ",self.ligne)
         _from=self.ligne[0]
         _to=self.ligne[2]
         _transp=self.ligne[1]
        # print (" ### mon _transp est ",_transp)
-        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM combined as A, combined  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
         self.conn.commit()
         self.rows = self.cursor.fetchall()
         
@@ -448,19 +466,19 @@ class MainWindow(QMainWindow):
         #print("Ma requete sql va afficher la chose suivante",self.ligne)
         if len(self.rows) > 0:
             distance2=self.dist(self.rows[0][3],self.rows[0][4])
-            print("Ma distance est",distance2)
+           # print("Ma distance est",distance2)
             distance= distance + self.dist(self.rows[0][3],self.rows[0][4])
-        print("La distance numero 1 est",distance)
+       # print("La distance numero 1 est",distance)
        
         if len(self.ligne) >= 5:
             self.rows=[]
             _from=self.ligne[2]
             _to=self.ligne[4]
             _transp=self.ligne[3]
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM combined as A, combined  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM {_meth} as A, {_meth}  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
             self.conn.commit()
             self.rows = self.cursor.fetchall()
-            print("Ma requete sql va afficher la chose suivante",self.rows)
+           # print("Ma requete sql va afficher la chose suivante",self.rows)
             
             self.rows2=[]
             self.rows2=self.rows
@@ -478,14 +496,14 @@ class MainWindow(QMainWindow):
             
             if len(self.rows) > 0:
                 distance= distance + self.dist(self.rows[0][3],self.rows[0][4])
-            print("La distance numero 2 est",distance)
+           # print("La distance numero 2 est",distance)
        
         if len(self.rows) >= 7:
             self.rows=[]
             _from=self.ligne[4]
             _to=self.ligne[6]
             _transp=self.ligne[5]
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM combined as A, combined  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
             self.conn.commit()
             self.rows = self.cursor.fetchall()
             #print("Ma requete sql va afficher la chose suivante",self.rows)
@@ -506,9 +524,9 @@ class MainWindow(QMainWindow):
 
             if len(self.rows) > 0:
                 distance= distance + self.dist(self.rows[0][3],self.rows[0][4])
-                print("La distance numero 3 est",distance)
+               # print("La distance numero 3 est",distance)
         
-        print("La distance finale est donc : ",distance)
+       # print("La distance finale est donc : ",distance)
             
         return distance
         
