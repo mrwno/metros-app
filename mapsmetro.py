@@ -75,7 +75,7 @@ class MainWindow(QMainWindow):
         controls_panel.addWidget(_label)
         controls_panel.addWidget(self.to_box)
         #Sert ??? mettre des valeurs pr???d???finies dans le To
-        predefined_value = "République"
+        predefined_value = "Bourse"
         self.to_box.addItem(predefined_value)
 
         controls_panel.addWidget(_label)
