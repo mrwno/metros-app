@@ -75,6 +75,14 @@ route_type numeric(10,6)
 
 );
 
+create table nodes (
+    
+stop_I numeric,
+lat numeric,
+lon numeric,
+name text
+);
+
 create table historique (
 id SERIAL PRIMARY KEY,
 from_station text ,

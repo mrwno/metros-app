@@ -371,13 +371,13 @@ class MainWindow(QMainWindow):
             j = 0
             for colonne in row :
                 if len(row) == 5:
-                    if j <= 3: 
+                    if j < 3: 
                         self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
                 if len(row) == 8:
-                    if j <= 5: 
+                    if j < 5: 
                         self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
                 if len(row) == 11:
-                    if j <= 7: 
+                    if j < 7: 
                         self.tableWidget.setItem(i, j, QTableWidgetItem(str(colonne)))
                 j = j + 1
             i = i + 1
