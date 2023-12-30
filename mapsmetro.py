@@ -182,11 +182,9 @@ class MainWindow(QMainWindow):
         _tostation = str(self.to_box.currentText())
         _hops = int(self.hop_box.currentText())
         _meth = str(self.meth_box.currentText())
-	self.cursor.execute("INSERT INTO historique (from_station, to_station, nb_hop, moyen) VALUES (%s, %s, %s, %s) RETURNING id",(_fromstation, _tostation, _hops, _meth))
-        self.conn.commit()
         if self.check_box.isChecked() == 0:
-	    self.cursor.execute("INSERT INTO historique (from_station, to_station, nb_hop, moyen) VALUES (%s, %s, %s, %s) RETURNING id",(_fromstation, _tostation, _hops, _meth))
-	    self.conn.commit()
+            self.cursor.execute("INSERT INTO historique (from_station, to_station, nb_hop, moyen) VALUES (%s, %s, %s, %s) RETURNING id",(_fromstation, _tostation, _hops, _meth))
+            self.conn.commit()
             self.cursor.execute("""SELECT * FROM historique WHERE id >= ALL(SELECT id FROM historique)""")
             self.conn.commit()
             rows = self.cursor.fetchall()
@@ -202,7 +200,7 @@ class MainWindow(QMainWindow):
         self.res4=[]
 
         route=[]
-	print("Recherche en cours ...")
+        print("Recherche en cours ...")
         if _meth == 'walk':
             if _hops >= 1 : 
                 self.cursor.execute(""f" SELECT distinct C.name, A.d_walk, D.name, A.from_stop_I, A.to_stop_I FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$ GROUP BY C.name, A.d_walk, D.name, A.from_stop_I, A.to_stop_I HAVING A.d_walk <= ALL(SELECT distinct  A.d_walk FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$)""")
@@ -706,5 +704,6 @@ if __name__ == '__main__':
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
 
 
