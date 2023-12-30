@@ -200,6 +200,7 @@ class MainWindow(QMainWindow):
         self.res4=[]
 
         route=[]
+	print("Recherche en cours ...")
         if _meth == 'walk':
             if _hops >= 1 : 
                 self.cursor.execute(""f" SELECT distinct C.name, A.d_walk, D.name, A.from_stop_I, A.to_stop_I FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$ GROUP BY C.name, A.d_walk, D.name, A.from_stop_I, A.to_stop_I HAVING A.d_walk <= ALL(SELECT distinct  A.d_walk FROM {_meth} AS A, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND A.to_stop_I = D.stop_I AND D.name = $${_tostation}$$)""")
