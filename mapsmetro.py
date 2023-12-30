@@ -217,14 +217,14 @@ class MainWindow(QMainWindow):
 
         if _meth != "walk":    
             if _hops >= 1 : 
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
+                self.cursor.execute(""f" SELECT distinct C.name, A.route_I, D.name, B.route_I, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 #print(self.rows)
                 self.res+=self.compare(self.rows)
                 
             if _hops >= 2 :
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id,  A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.cursor.execute(""f" SELECT distinct C.name, A.route_I, D.name, B.route_I,  A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 self.res7=self.compare(self.rows)
@@ -235,7 +235,7 @@ class MainWindow(QMainWindow):
                     #print("##############################################")
                     fromi=self.res7[e][2]
                     #print("Mon from_station est",fromi)
-                    self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
+                    self.cursor.execute(""f" SELECT distinct C.name, A.route_I, D.name, B.route_I, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${fromi}$$ AND B.to_stop_I = D.stop_I AND D.name=$${_tostation}$$""")
                     self.conn.commit()
                     self.rows_new += self.cursor.fetchall()
                     self.rows=self.rows_new
@@ -285,7 +285,7 @@ class MainWindow(QMainWindow):
                #print("Ma valeur est",self.valeur)
                 self.rows=[]
                 self.res_combined=[]
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id , A.from_stop_i, B.to_stop_I FROM {_meth}  AS A,{_meth}  AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
+                self.cursor.execute(""f" SELECT distinct C.name, A.route_I, D.name, B.route_I , A.from_stop_i, B.to_stop_I FROM {_meth}  AS A,{_meth}  AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 self.res7=self.compare(self.rows)
@@ -296,7 +296,7 @@ class MainWindow(QMainWindow):
                 
                 self.rows=[]
                 #maintenant, je m occupe du cote droit
-                self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id , A.from_stop_i, B.to_stop_I FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
+                self.cursor.execute(""f" SELECT distinct C.name, A.route_I, D.name, B.route_I , A.from_stop_i, B.to_stop_I FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$  """)
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 self.res8=self.compare(self.rows)
@@ -315,7 +315,7 @@ class MainWindow(QMainWindow):
                     _from=element[2]
                     for element2 in self.res8:
                         _to=element2[0]
-                        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id, D.name, B.bus_id, A.from_stop_i, B.to_stop_I FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
+                        self.cursor.execute(""f" SELECT distinct C.name, A.route_I, D.name, B.route_I, A.from_stop_i, B.to_stop_I FROM {_meth} AS A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$  """)
                         self.conn.commit()
                         self.rows= self.cursor.fetchall()
                         self.res9=self.compare(self.rows)
@@ -389,7 +389,7 @@ class MainWindow(QMainWindow):
             j = j+1
         
         self.update()
-	print("Recherche d'itinéraire finie")
+        print("Recherche d'itinéraire finie")
 
 
    
@@ -445,7 +445,7 @@ class MainWindow(QMainWindow):
         _to=self.ligne[2]
         _transp=self.ligne[1]
        # print (" ### mon _transp est ",_transp)
-        self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+        self.cursor.execute(""f" SELECT distinct C.name, A.route_I,D.name, C.lon,C.lat FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
         self.conn.commit()
         self.rows = self.cursor.fetchall()
         
@@ -455,7 +455,7 @@ class MainWindow(QMainWindow):
         self.rows=[]
         #print("mon row est",self.rows2)
         for i in range(len(self.rows2)):
-            test=self.rows2[i][1] # on prend le bus_id
+            test=self.rows2[i][1] # on prend le route_I
             for element in test:
                 self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
                 self.conn.commit()
@@ -476,7 +476,7 @@ class MainWindow(QMainWindow):
             _from=self.ligne[2]
             _to=self.ligne[4]
             _transp=self.ligne[3]
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM {_meth} as A, {_meth}  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+            self.cursor.execute(""f" SELECT distinct C.name, A.route_I,D.name, C.lon,C.lat FROM {_meth} as A, {_meth}  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
             self.conn.commit()
             self.rows = self.cursor.fetchall()
            # print("Ma requete sql va afficher la chose suivante",self.rows)
@@ -486,7 +486,7 @@ class MainWindow(QMainWindow):
             self.rows=[]
             #print("mon row est",self.rows2)
             for i in range(len(self.rows2)):
-                test=self.rows2[i][1] # on prend le bus_id
+                test=self.rows2[i][1] # on prend le route_I
                 for element in test:
                     self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
                     self.conn.commit()
@@ -504,7 +504,7 @@ class MainWindow(QMainWindow):
             _from=self.ligne[4]
             _to=self.ligne[6]
             _transp=self.ligne[5]
-            self.cursor.execute(""f" SELECT distinct C.name, A.bus_id,D.name, C.lon,C.lat FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+            self.cursor.execute(""f" SELECT distinct C.name, A.route_I,D.name, C.lon,C.lat FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
             self.conn.commit()
             self.rows = self.cursor.fetchall()
             #print("Ma requete sql va afficher la chose suivante",self.rows)
@@ -514,7 +514,7 @@ class MainWindow(QMainWindow):
             self.rows=[]
             #print("mon row est",self.rows2)
             for i in range(len(self.rows2)):
-                test=self.rows2[i][1] # on prend le bus_id
+                test=self.rows2[i][1] # on prend le route_I
                 for element in test:
                     self.cursor.execute(""f" SELECT distinct A.route_name FROM paris_to as A WHERE A.route_i = $${element}$$ """)
                     self.conn.commit()

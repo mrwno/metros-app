@@ -6,8 +6,8 @@ d numeric,
 duration_avg numeric,
 n_vehicles numeric,
 route_I_counts text,
-bus_id numeric[],
-route_id numeric[]
+route_I numeric[],
+counts numeric[]
 );
 
 create table bus(
@@ -18,8 +18,8 @@ d numeric,
 duration_avg numeric,
 n_vehicles numeric,
 route_I_counts text,
-bus_id numeric[],
-route_id numeric[]
+route_I numeric[],
+counts numeric[]
 );
 
 create table rail(
@@ -30,8 +30,8 @@ d numeric,
 duration_avg numeric,
 n_vehicles numeric,
 route_I_counts text,
-bus_id numeric[],
-route_id numeric[]
+route_I numeric[],
+counts numeric[]
 );
 
 create table tram(
@@ -42,8 +42,8 @@ d numeric,
 duration_avg numeric,
 n_vehicles numeric,
 route_I_counts text,
-bus_id numeric[],
-route_id numeric[]
+route_I numeric[],
+counts numeric[]
 );
 
 create table walk(
@@ -62,8 +62,8 @@ d numeric,
 duration_avg numeric,
 n_vehicles numeric,
 route_I_counts text,
-bus_id numeric[],
-route_id numeric[],
+route_I numeric[],
+counts numeric[],
 route_type numeric
 );
 
