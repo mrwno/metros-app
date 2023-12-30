@@ -538,10 +538,7 @@ class MainWindow(QMainWindow):
         return distance
         
     def dist(self,lat1,lng1,lat2,lng2):
-        self.cursor.execute(""f" SELECT ( ABS(({lat1}-{lat2})*({lat1}-{lat2})) + ABS(({lng1}-{lng2})*({lng1}-{lng2})) ) FROM nodes """)
-        self.conn.commit()
-        rows = self.cursor.fetchall()
-        return rows[0][0]
+        return abs((lat1 - lat2) * (lat1 - lat2)) + abs((lng1 - lng2) * (lng1 - lng2))
       
 
     def button_Clear(self):
