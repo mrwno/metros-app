@@ -453,7 +453,7 @@ class MainWindow(QMainWindow):
         _to=self.ligne[2]
         _transp=self.ligne[1]
        # print (" ### mon _transp est ",_transp)
-        self.cursor.execute(""f" SELECT distinct C.name, A.route_I,D.name, C.lon,C.lat FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+        self.cursor.execute(""f" SELECT distinct C.name, A.route_I,D.name, C.lon,C.lat,D.lon,D.lat FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
         self.conn.commit()
         self.rows = self.cursor.fetchall()
         
@@ -474,9 +474,9 @@ class MainWindow(QMainWindow):
        # print("mon self.rows est",self.rows)
         #print("Ma requete sql va afficher la chose suivante",self.ligne)
         if len(self.rows) > 0:
-            distance2=self.dist(self.rows[0][3],self.rows[0][4])
+            distance2=self.dist(self.rows[0][3],self.rows[0][4],self.rows[0][5],self.rows[0][6])
            # print("Ma distance est",distance2)
-            distance= distance + self.dist(self.rows[0][3],self.rows[0][4])
+            distance= distance + self.dist(self.rows[0][3],self.rows[0][4],self.rows[0][5],self.rows[0][6])
        # print("La distance numero 1 est",distance)
        
         if len(self.ligne) >= 5:
@@ -484,7 +484,7 @@ class MainWindow(QMainWindow):
             _from=self.ligne[2]
             _to=self.ligne[4]
             _transp=self.ligne[3]
-            self.cursor.execute(""f" SELECT distinct C.name, A.route_I,D.name, C.lon,C.lat FROM {_meth} as A, {_meth}  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+            self.cursor.execute(""f" SELECT distinct C.name, A.route_I,D.name, C.lon,C.lat,D.lon,D.lat  FROM {_meth} as A, {_meth}  AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
             self.conn.commit()
             self.rows = self.cursor.fetchall()
            # print("Ma requete sql va afficher la chose suivante",self.rows)
@@ -504,15 +504,15 @@ class MainWindow(QMainWindow):
                         self.rows.append(self.rows2[i])
             
             if len(self.rows) > 0:
-                distance= distance + self.dist(self.rows[0][3],self.rows[0][4])
-           # print("La distance numero 2 est",distance)
+                distance= distance + self.dist(self.rows[0][3],self.rows[0][4],self.rows[0][5],self.rows[0][6])
+           #print("La distance numero 2 est",distance)
        
         if len(self.rows) >= 7:
             self.rows=[]
             _from=self.ligne[4]
             _to=self.ligne[6]
             _transp=self.ligne[5]
-            self.cursor.execute(""f" SELECT distinct C.name, A.route_I,D.name, C.lon,C.lat FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
+            self.cursor.execute(""f" SELECT distinct C.name, A.route_I,D.name, C.lon,C.lat,D.lon,D.lat  FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D, paris_to AS E WHERE A.from_stop_I = C.stop_I AND C.name = $${_from}$$  AND B.to_stop_I = D.stop_I AND D.name = $${_to}$$    """)
             self.conn.commit()
             self.rows = self.cursor.fetchall()
             #print("Ma requete sql va afficher la chose suivante",self.rows)
@@ -532,15 +532,15 @@ class MainWindow(QMainWindow):
                         self.rows.append(self.rows2[i])      
 
             if len(self.rows) > 0:
-                distance= distance + self.dist(self.rows[0][3],self.rows[0][4])
+                distance= distance + self.dist(self.rows[0][3],self.rows[0][4],self.rows[0][5],self.rows[0][6])
                # print("La distance numero 3 est",distance)
         
        # print("La distance finale est donc : ",distance)
             
         return distance
         
-    def dist(self,lat,lng):
-        self.cursor.execute(""f" WITH mytable (distance, name2) AS (SELECT ( ABS((lat-{lat})*(lat-{lat})) + ABS((lon-{lng})*(lon-{lng})) ), name FROM nodes) SELECT distance FROM mytable  WHERE distance <=  (SELECT min(B.distance) FROM mytable as B)  """)
+    def dist(self,lat1,lng1,lat2,lng2):
+        self.cursor.execute(""f" SELECT ( ABS(({lat1}-{lat2})*({lat1}-{lat2})) + ABS(({lng1}-{lng2})*({lng1}-{lng2})) ) FROM nodes """)
         self.conn.commit()
         rows = self.cursor.fetchall()
         return rows[0][0]
