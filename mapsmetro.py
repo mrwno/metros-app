@@ -215,8 +215,8 @@ class MainWindow(QMainWindow):
                 self.conn.commit()
                 self.res += self.cursor.fetchall()
 
-        if _meth != "walk":    
-            if _hops >= 1 : 
+        if _meth != "walk":   
+            if _hops >= 1 :
                 self.cursor.execute(""f" SELECT distinct C.name, A.route_I, D.name, B.route_I, A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I AND D.name = $${_tostation}$$""")
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
@@ -224,13 +224,16 @@ class MainWindow(QMainWindow):
                 self.res+=self.compare(self.rows)
                 
             if _hops >= 2 :
+		# D'abord de la station A vers B
                 self.cursor.execute(""f" SELECT distinct C.name, A.route_I, D.name, B.route_I,  A.from_stop_i, B.to_stop_I FROM {_meth} as A, {_meth} AS B, nodes AS C, nodes AS D WHERE A.from_stop_I = C.stop_I AND C.name = $${_fromstation}$$ AND B.to_stop_I = D.stop_I """)
                 self.conn.commit()
                 self.rows += self.cursor.fetchall()
                 self.res7=self.compare(self.rows)
+		# On supprime les doublons
                 for elementsss in self.res7:
                     if self.res7.count(elementsss)>=2:
                         self.res7.remove(elementsss)
+		# Ensuite de la station B vers C
                 for e in range(len(self.res7)):
                     #print("##############################################")
                     fromi=self.res7[e][2]
@@ -243,6 +246,7 @@ class MainWindow(QMainWindow):
                     self.res_new=self.compare(self.rows)
     
                     #print("Mon res3  est donc ",self.res_new)
+		# On combine le Hop1 et le Hop2
                 self.res_combined = []
                 for ligne_res7 in self.res7:
                     for ligne_res_new in self.res_new:
@@ -261,12 +265,14 @@ class MainWindow(QMainWindow):
                 
                # print(self.res_combined2)
 
+		# On ne retient que les combinaisons dont la distance totale est la plus courte
                 indice=0
                 liste=[]
                 liste_distance=[]
                 max_value=0
                 for element in self.res_combined2:
                     self.ligne=element
+		    # On calcule la distance de notre combinaison
                     distance=self.distance(self.ligne)
                     if indice == 0 and len(element) >=4: # on rentrera donc 3 fois
                         liste_distance.append(distance)
@@ -277,7 +283,6 @@ class MainWindow(QMainWindow):
                         if distance < liste_distance[max_value]:
                             liste_distance[max_value]=distance
                             liste[max_value]=element
-        
                 self.res+=liste
 
             if _hops >= 3  : #ATTENTION  ++++++++++++++++++++
@@ -389,7 +394,7 @@ class MainWindow(QMainWindow):
             j = j+1
         
         self.update()
-        print("Recherche d'itinéraire finie")
+        print("Recherche d'itineraire finie")
 
 
    
