@@ -185,6 +185,8 @@ class MainWindow(QMainWindow):
         self.cursor.execute("INSERT INTO historique (from_station, to_station, nb_hop, moyen) VALUES (%s, %s, %s, %s) RETURNING id",(_fromstation, _tostation, _hops, _meth))
         self.conn.commit()
         if self.check_box.isChecked() == 0:
+	    	self.cursor.execute("INSERT INTO historique (from_station, to_station, nb_hop, moyen) VALUES (%s, %s, %s, %s) RETURNING id",(_fromstation, _tostation, _hops, _meth))
+			self.conn.commit()
             self.cursor.execute("""SELECT * FROM historique WHERE id >= ALL(SELECT id FROM historique)""")
             self.conn.commit()
             rows = self.cursor.fetchall()
