@@ -117,7 +117,7 @@ class MainWindow(QMainWindow):
         
 
     def connect_DB(self):
-        self.conn = psycopg2.connect(database="l3info_61", user="l3info_61", host="10.11.11.22", password="L3INFO_61")
+        self.conn = psycopg2.connect(XXX) #Ajouter la BDD PostgreSQL
         self.cursor = self.conn.cursor()
 
         self.cursor.execute("""TRUNCATE TABLE historique RESTART IDENTITY;""")
