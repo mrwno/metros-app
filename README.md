@@ -1,6 +1,6 @@
 # metros-app
 School project in python / postgreSQL
-
+Before Starting add your database informations in mapmetros.py
 Our database is the number 61.
 
 To lauch the application you have to type :
