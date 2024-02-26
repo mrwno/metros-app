@@ -1,4 +1,7 @@
 # metros-app
+
+Data are available on https://zenodo.org/records/1186215
+
 School project in python / postgreSQL
 Before Starting add your database informations in mapmetros.py
 Our database is the number 61.
